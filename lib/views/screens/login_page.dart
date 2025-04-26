@@ -3,6 +3,9 @@ import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/services/auth_service.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
 import 'package:flutterbookstore/views/screens/register_page.dart';
+import 'package:flutterbookstore/config/app_config.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -76,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Login to your account to continue reading',
+              'Login with the username/email and password created in your account',
               style: TextStyle(
                 color: AppColor.grey,
                 fontWeight: FontWeight.w400,
@@ -87,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
             // Email Field
             _buildTextField(
               controller: _emailController,
-              hintText: 'Email address',
+              hintText: 'Email or Username',
               keyboardType: TextInputType.emailAddress,
               prefixIcon: Icons.email_outlined,
             ),
@@ -142,30 +145,40 @@ class _LoginPageState extends State<LoginPage> {
 
                     if (success) {
                       // Navigate to home page
+                      if (!mounted) return;
+
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (context) => const HomePage(),
                         ),
                       );
                     } else {
+                      if (!mounted) return;
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Invalid email or password'),
+                          content: Text(
+                            'Invalid email or password. Please try again.',
+                          ),
                           backgroundColor: Colors.red,
                         ),
                       );
                     }
                   } catch (e) {
+                    if (!mounted) return;
+
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('An error occurred. Please try again.'),
+                      SnackBar(
+                        content: Text('Login error: $e'),
                         backgroundColor: Colors.red,
                       ),
                     );
                   } finally {
-                    setState(() {
-                      _isLoading = false;
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _isLoading = false;
+                      });
+                    }
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -234,6 +247,198 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
             const SizedBox(height: 24),
+            // Debug button for testing API connectivity (remove in production)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: OutlinedButton(
+                onPressed: () async {
+                  try {
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    // Test API connectivity
+                    final response = await http.get(
+                      Uri.parse('${AppConfig.apiBaseUrl}'),
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                      },
+                    );
+
+                    String message = 'API Connection Test:\n';
+                    message += 'Status code: ${response.statusCode}\n';
+                    message += 'API URL: ${AppConfig.apiBaseUrl}\n';
+
+                    if (response.statusCode >= 200 &&
+                        response.statusCode < 400) {
+                      message += 'Connection successful!\n';
+                      try {
+                        final data = json.decode(response.body);
+                        if (data is Map) {
+                          message += 'API data: ${data.keys}\n';
+                        }
+                      } catch (e) {
+                        message += 'Could not parse response as JSON\n';
+                      }
+                    } else {
+                      message += 'Connection failed.\n';
+                    }
+
+                    // Try an OPTIONS request to check CORS configuration
+                    try {
+                      final optionsResponse = await http.get(
+                        Uri.parse('${AppConfig.apiBaseUrl}/login'),
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Accept': 'application/json',
+                        },
+                      );
+
+                      message += '\nOPTIONS check for login endpoint:\n';
+                      message += 'Status: ${optionsResponse.statusCode}\n';
+
+                      // Check if server provides CORS headers
+                      if (optionsResponse.headers.containsKey(
+                        'access-control-allow-origin',
+                      )) {
+                        message += 'CORS enabled: Yes\n';
+                        message +=
+                            'Allowed origins: ${optionsResponse.headers['access-control-allow-origin']}\n';
+                      } else {
+                        message += 'CORS headers not found\n';
+                      }
+                    } catch (e) {
+                      message += '\nOPTIONS request failed: $e';
+                    }
+
+                    message +=
+                        '\nResponse preview: ${response.body.length > 100 ? response.body.substring(0, 100) + '...' : response.body}';
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        duration: const Duration(seconds: 15),
+                        action: SnackBarAction(
+                          label: 'OK',
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          },
+                        ),
+                      ),
+                    );
+
+                    // Additionally log to console for more detail
+                    print('====== API TEST DETAILS ======');
+                    print(message);
+                    print('Full response body: ${response.body}');
+                    print('Response headers: ${response.headers}');
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Connection error: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 10),
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+                },
+                child: const Text('Test API Connection'),
+              ),
+            ),
+            // Debug button for testing credentials (remove in production)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: OutlinedButton(
+                onPressed: () async {
+                  try {
+                    if (_emailController.text.isEmpty ||
+                        _passwordController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter credentials to test'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _isLoading = true;
+                    });
+
+                    // Test the login API directly with raw http request
+                    final loginUrl = '${AppConfig.apiBaseUrl}/login';
+                    final response = await http.post(
+                      Uri.parse(loginUrl),
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                      },
+                      body: json.encode({
+                        'email': _emailController.text,
+                        'password': _passwordController.text,
+                      }),
+                    );
+
+                    String message = 'Direct Login Test:\n';
+                    message += 'Status code: ${response.statusCode}\n';
+                    message +=
+                        'Response: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}\n';
+
+                    // Also try form-encoded version
+                    final formResponse = await http.post(
+                      Uri.parse(loginUrl),
+                      headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json',
+                      },
+                      body:
+                          'email=${Uri.encodeComponent(_emailController.text)}&password=${Uri.encodeComponent(_passwordController.text)}',
+                    );
+
+                    message += '\nForm-encoded test:\n';
+                    message += 'Status code: ${formResponse.statusCode}\n';
+                    message +=
+                        'Response: ${formResponse.body.length > 200 ? formResponse.body.substring(0, 200) + '...' : formResponse.body}';
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        duration: const Duration(seconds: 15),
+                        action: SnackBarAction(
+                          label: 'OK',
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          },
+                        ),
+                      ),
+                    );
+
+                    // Log to console
+                    print('====== DIRECT LOGIN TEST ======');
+                    print(message);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Test error: $e'),
+                        backgroundColor: Colors.red,
+                        duration: const Duration(seconds: 10),
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+                },
+                child: const Text('Test Credentials'),
+              ),
+            ),
             // Register Link
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

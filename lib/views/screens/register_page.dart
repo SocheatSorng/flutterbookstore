@@ -107,7 +107,7 @@ class _RegisterPageState extends State<RegisterPage> {
           Container(
             margin: const EdgeInsets.only(bottom: 32),
             child: Text(
-              'Join our book community and start your reading journey!',
+              'Join our book community! Your email will be used as your username.',
               style: TextStyle(
                 color: AppColor.secondary.withOpacity(0.7),
                 fontSize: 14,
@@ -299,6 +299,29 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    // Validate email format
+    final emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegExp.hasMatch(_emailController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate password length
+    if (_passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password must be at least 6 characters long'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -313,6 +336,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (success) {
         // Show success message
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Account created successfully! Please log in.'),
@@ -321,28 +346,37 @@ class _RegisterPageState extends State<RegisterPage> {
         );
 
         // Navigate to login page
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
+        if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration failed. Please try again.'),
+            content: Text(
+              'Registration failed. Email might already be registered.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('An error occurred. Please try again.'),
+        SnackBar(
+          content: Text('An error occurred: $e'),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 }

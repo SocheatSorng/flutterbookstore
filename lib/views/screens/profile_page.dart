@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/services/auth_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
+import 'package:flutterbookstore/views/screens/edit_profile_page.dart';
 import 'package:flutterbookstore/views/widgets/main_app_bar_widget.dart';
 import 'package:flutterbookstore/views/widgets/menu_tile_widget.dart';
 
@@ -32,6 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (authService.isAuthenticated) {
       final user = await authService.getCurrentUser();
+      print("Retrieved user data: $user");
       setState(() {
         _isAuthenticated = true;
         _userData = user;
@@ -155,37 +157,77 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               children: [
                 // Profile Picture
-                Container(
-                  width: 96,
-                  height: 96,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(100),
-                    color: Colors.grey[300],
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                Stack(
+                  children: [
+                    Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                        color: Colors.grey[300],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(100),
-                      border: Border.all(color: Colors.white, width: 3),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.white,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final result = await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      EditProfilePage(userData: _userData),
+                            ),
+                          );
+
+                          if (result == true) {
+                            // Refresh profile data
+                            _checkAuthentication();
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(100),
+                            border: Border.all(
+                              color: AppColor.primary,
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.edit,
+                            size: 18,
+                            color: AppColor.primary,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
                 // Fullname
                 Container(
                   margin: const EdgeInsets.only(bottom: 4, top: 14),
                   child: Text(
-                    _userData?['name'] ?? 'Book Reader',
+                    _getFullName(),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -193,9 +235,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                 ),
-                // Username
+                // Email
                 Text(
-                  _userData?['email'] ?? 'reader@example.com',
+                  _getEmail(),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
                     fontSize: 14,
@@ -317,5 +359,75 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  // Helper method to get the full name from different possible data structures
+  String _getFullName() {
+    if (_userData == null) return 'Book Reader';
+
+    // Check if the data might be nested inside a data or user property
+    final Map<String, dynamic> userData = _getNestedUserData();
+
+    // Try different possible field name combinations
+    final firstName =
+        userData['firstName'] ??
+        userData['FirstName'] ??
+        userData['first_name'] ??
+        '';
+
+    final lastName =
+        userData['lastName'] ??
+        userData['LastName'] ??
+        userData['last_name'] ??
+        '';
+
+    // If we have a name field directly, use that
+    final name = userData['name'] ?? '';
+
+    if (name.isNotEmpty) {
+      return name;
+    }
+
+    // Otherwise combine first and last name
+    if (firstName.isNotEmpty || lastName.isNotEmpty) {
+      return '$firstName $lastName'.trim();
+    }
+
+    return 'Book Reader';
+  }
+
+  // Helper method to get the email
+  String _getEmail() {
+    if (_userData == null) return 'reader@example.com';
+
+    // Check if the data might be nested inside a data or user property
+    final Map<String, dynamic> userData = _getNestedUserData();
+
+    return userData['email'] ??
+        userData['Email'] ??
+        userData['username'] ??
+        userData['Username'] ??
+        'reader@example.com';
+  }
+
+  // Helper method to extract possibly nested user data
+  Map<String, dynamic> _getNestedUserData() {
+    // If user data is directly available at the root level
+    if (_userData == null) return {};
+
+    // If data is nested within 'data' property (common in API responses)
+    if (_userData!.containsKey('data') &&
+        _userData!['data'] is Map<String, dynamic>) {
+      return _userData!['data'] as Map<String, dynamic>;
+    }
+
+    // If data is nested within 'user' property
+    if (_userData!.containsKey('user') &&
+        _userData!['user'] is Map<String, dynamic>) {
+      return _userData!['user'] as Map<String, dynamic>;
+    }
+
+    // Return the original userData if no nesting found
+    return _userData!;
   }
 }
