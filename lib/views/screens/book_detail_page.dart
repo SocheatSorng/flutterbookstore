@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/models/book.dart';
 import 'package:flutterbookstore/views/screens/cart_page.dart';
+import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/services/cart_service.dart';
+import 'package:flutterbookstore/services/auth_service.dart';
 
 class BookDetailPage extends StatefulWidget {
   final Book book;
@@ -17,6 +19,8 @@ class BookDetailPage extends StatefulWidget {
 class _BookDetailPageState extends State<BookDetailPage> {
   int quantity = 1;
   bool isFavorite = false;
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   void _increaseQuantity() {
     setState(() {
@@ -36,12 +40,12 @@ class _BookDetailPageState extends State<BookDetailPage> {
     setState(() {
       isFavorite = !isFavorite;
     });
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          isFavorite 
-              ? 'Added to your wishlist!' 
+          isFavorite
+              ? 'Added to your wishlist!'
               : 'Removed from your wishlist!',
         ),
         backgroundColor: AppColor.primary,
@@ -50,15 +54,91 @@ class _BookDetailPageState extends State<BookDetailPage> {
     );
   }
 
-  void _addToCart() {
-    // Add book to cart
-    // This is placeholder code - you would implement actual cart functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${widget.book.title} added to your cart!'),
-        backgroundColor: AppColor.primary,
-        duration: Duration(seconds: 1),
-      ),
+  Future<void> _addToCart() async {
+    // Check if user is logged in
+    if (!_authService.isAuthenticated) {
+      _showLoginRequiredDialog();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await CartService.addToCart(
+        widget.book,
+        quantity: quantity,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.book.title} added to your cart!'),
+            backgroundColor: AppColor.primary,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add to cart. Please try again.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Login Required'),
+          content: Text('You need to login to add items to your cart.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              },
+              child: Text('Login'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColor.primary,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -116,66 +196,86 @@ class _BookDetailPageState extends State<BookDetailPage> {
       ),
       // Buy Now Button
       bottomNavigationBar: Container(
-        width: MediaQuery.of(context).size.width,
+        height: 80,
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: AppColor.border, width: 1)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: Offset(0, -5),
-            ),
-          ],
         ),
         child: Row(
           children: [
-            // Add to Cart Button
-            Expanded(
-              flex: 5,
+            // Add to cart button
+            Container(
+              width: 50,
+              height: 50,
+              margin: EdgeInsets.only(right: 16),
               child: ElevatedButton(
-                onPressed: _addToCart,
-                child: Text(
-                  'Add to Cart',
-                  style: TextStyle(
-                    color: AppColor.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
+                onPressed: _isLoading ? null : _addToCart,
+                child:
+                    _isLoading
+                        ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : Icon(
+                          Icons.shopping_cart_outlined,
+                          color: Colors.white,
+                        ),
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColor.secondary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
-                    side: BorderSide(color: AppColor.primary, width: 1),
                   ),
+                  padding: EdgeInsets.zero,
                   elevation: 0,
                 ),
               ),
             ),
-            SizedBox(width: 12),
-            // Buy Now Button
+            // Buy now button
             Expanded(
               flex: 5,
               child: ElevatedButton(
-                onPressed: () {
-                  // Add to cart and go to cart page
-                  _addToCart();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => CartPage()),
-                  );
-                },
-                child: Text(
-                  'Buy Now',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
+                onPressed:
+                    _isLoading
+                        ? null
+                        : () async {
+                          // Check if user is logged in before proceeding
+                          if (!_authService.isAuthenticated) {
+                            _showLoginRequiredDialog();
+                            return;
+                          }
+
+                          await _addToCart();
+
+                          if (!mounted) return;
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CartPage()),
+                          );
+                        },
+                child:
+                    _isLoading
+                        ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : Text(
+                          'Buy Now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 14),
                   backgroundColor: AppColor.primary,
@@ -218,53 +318,67 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: widget.book.image != null && widget.book.image!.isNotEmpty
-                              ? Image.network(
-                                  widget.book.image!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      height: 280,
-                                      width: 200,
-                                      color: AppColor.primary.withOpacity(0.1),
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.book, size: 80, color: AppColor.primary),
-                                          SizedBox(height: 8),
-                                          Text(
-                                            widget.book.title,
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColor.dark,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  height: 280,
-                                  width: 200,
-                                  color: AppColor.primary.withOpacity(0.1),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.book, size: 80, color: AppColor.primary),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        widget.book.title,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColor.dark,
+                          child:
+                              widget.book.image != null &&
+                                      widget.book.image!.isNotEmpty
+                                  ? Image.network(
+                                    widget.book.image!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        height: 280,
+                                        width: 200,
+                                        color: AppColor.primary.withOpacity(
+                                          0.1,
                                         ),
-                                      ),
-                                    ],
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.book,
+                                              size: 80,
+                                              color: AppColor.primary,
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              widget.book.title,
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColor.dark,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )
+                                  : Container(
+                                    height: 280,
+                                    width: 200,
+                                    color: AppColor.primary.withOpacity(0.1),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.book,
+                                          size: 80,
+                                          color: AppColor.primary,
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          widget.book.title,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColor.dark,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
                         ),
                       ),
                     ),
@@ -306,10 +420,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 // Author
                 Text(
                   'by ${widget.book.author}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColor.grey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppColor.grey),
                 ),
                 SizedBox(height: 12),
                 // Price and Rating Row
@@ -341,10 +452,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         SizedBox(width: 4),
                         Text(
                           '(120 reviews)',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColor.grey,
-                          ),
+                          style: TextStyle(fontSize: 12, color: AppColor.grey),
                         ),
                       ],
                     ),
@@ -353,7 +461,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
               ],
             ),
           ),
-          
+
           // Quantity Section
           Container(
             padding: EdgeInsets.all(16),
@@ -386,7 +494,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                       // Quantity Display
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8),
@@ -401,11 +512,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       ),
                       // Increase Button
                       IconButton(
-                        icon: Icon(
-                          Icons.add,
-                          color: AppColor.dark,
-                          size: 16,
-                        ),
+                        icon: Icon(Icons.add, color: AppColor.dark, size: 16),
                         onPressed: _increaseQuantity,
                       ),
                     ],
@@ -415,15 +522,12 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 // Stock Information
                 Text(
                   'In Stock: ${widget.book.stockQuantity}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColor.grey,
-                  ),
+                  style: TextStyle(fontSize: 12, color: AppColor.grey),
                 ),
               ],
             ),
           ),
-          
+
           // Book Description Section
           Container(
             padding: EdgeInsets.all(16),
@@ -451,7 +555,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
               ],
             ),
           ),
-          
+
           // Book Details Section
           Container(
             padding: EdgeInsets.all(16),
@@ -467,7 +571,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   ),
                 ),
                 SizedBox(height: 12),
-                _buildDetailRow('Category', 'Category ${widget.book.categoryID}'),
+                _buildDetailRow(
+                  'Category',
+                  'Category ${widget.book.categoryID}',
+                ),
                 _buildDetailRow('Published', widget.book.createdAt),
                 _buildDetailRow('Language', 'English'),
                 _buildDetailRow('Pages', '${100 + (widget.book.bookID * 15)}'),
@@ -490,10 +597,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
             flex: 3,
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColor.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: AppColor.grey),
             ),
           ),
           Expanded(
@@ -511,4 +615,4 @@ class _BookDetailPageState extends State<BookDetailPage> {
       ),
     );
   }
-} 
+}

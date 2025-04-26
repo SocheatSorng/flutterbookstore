@@ -4,12 +4,18 @@ import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
 import 'package:flutterbookstore/views/screens/welcome_page.dart';
 import 'package:flutterbookstore/services/auth_service.dart';
+import 'package:flutterbookstore/services/cart_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize auth service
   await AuthService().init();
+
+  // Initialize cart if user is authenticated
+  if (AuthService().isAuthenticated) {
+    await CartService.fetchCartItems();
+  }
 
   // Set error handler for missing image assets
   ErrorWidget.builder = (FlutterErrorDetails details) {

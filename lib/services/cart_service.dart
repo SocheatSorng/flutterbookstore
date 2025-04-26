@@ -1,8 +1,14 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:http/http.dart' as http;
 import '../models/cart.dart';
+import '../models/book.dart';
+import 'auth_service.dart';
+import '../config/app_config.dart';
 
 class CartService {
   static final List<Cart> _cartData = [];
+  static final AuthService _authService = AuthService();
 
   // Sample data for testing UI
   static List<Cart> get dummyCartData {
@@ -38,34 +44,176 @@ class CartService {
   // Get all cart items
   static List<Cart> get cartData => _cartData;
 
-  // Add item to cart
-  static void addToCart(Cart item) {
-    final existingIndex = _cartData.indexWhere(
-      (cart) => cart.bookId == item.bookId,
-    );
+  // Add item to cart with API integration
+  static Future<bool> addToCart(Book book, {int quantity = 1}) async {
+    // Check if user is authenticated
+    if (!_authService.isAuthenticated) {
+      return false;
+    }
 
-    if (existingIndex >= 0) {
-      // If item already exists, increment quantity
-      _cartData[existingIndex].quantity += 1;
-    } else {
-      // Otherwise add new item
-      _cartData.add(item);
+    try {
+      final userId = _authService.currentUser?['AccountID'];
+      if (userId == null) {
+        return false;
+      }
+
+      // Prepare API request
+      final response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/carts'),
+        headers: _authService.authHeaders,
+        body: json.encode({
+          'UserID': userId,
+          'BookID': book.bookID,
+          'Quantity': quantity,
+        }),
+      );
+
+      // Handle API response
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          await fetchCartItems(); // Refresh cart items from API
+          return true;
+        }
+      }
+
+      print('Add to cart error: ${response.body}');
+      return false;
+    } catch (e) {
+      print('Add to cart exception: $e');
+      return false;
     }
   }
 
-  // Remove item from cart
-  static void removeFromCart(String id) {
-    _cartData.removeWhere((item) => item.id == id);
+  // Fetch cart items from API
+  static Future<List<Cart>> fetchCartItems() async {
+    if (!_authService.isAuthenticated) {
+      return [];
+    }
+
+    try {
+      final userId = _authService.currentUser?['AccountID'];
+      if (userId == null) {
+        return [];
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConfig.apiBaseUrl}/carts/user/$userId'),
+        headers: _authService.authHeaders,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> cartItems = data['data'];
+
+          _cartData.clear(); // Clear existing cart
+
+          // Convert API response to Cart objects
+          for (var item in cartItems) {
+            final book = item['book'];
+            if (book != null) {
+              _cartData.add(
+                Cart(
+                  id: item['CartID'].toString(),
+                  bookId: book['BookID'].toString(),
+                  title: book['Title'],
+                  image: book['Image'] ?? '',
+                  price: double.parse(book['Price'].toString()),
+                  quantity: item['Quantity'],
+                ),
+              );
+            }
+          }
+
+          return _cartData;
+        }
+      }
+
+      return [];
+    } catch (e) {
+      print('Fetch cart error: $e');
+      return [];
+    }
   }
 
-  // Update quantity
-  static void updateQuantity(String id, int quantity) {
-    final index = _cartData.indexWhere((item) => item.id == id);
-    if (index >= 0) {
-      _cartData[index].quantity = max(
-        1,
-        quantity,
-      ); // Ensure quantity is at least 1
+  // Remove item from cart via API
+  static Future<bool> removeFromCart(String id) async {
+    if (!_authService.isAuthenticated) {
+      return false;
+    }
+
+    try {
+      final response = await http.delete(
+        Uri.parse('${AppConfig.apiBaseUrl}/carts/$id'),
+        headers: _authService.authHeaders,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        await fetchCartItems(); // Refresh cart items
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Remove from cart error: $e');
+      return false;
+    }
+  }
+
+  // Update quantity via API
+  static Future<bool> updateQuantity(String id, int quantity) async {
+    if (!_authService.isAuthenticated) {
+      return false;
+    }
+
+    try {
+      final response = await http.put(
+        Uri.parse('${AppConfig.apiBaseUrl}/carts/$id'),
+        headers: _authService.authHeaders,
+        body: json.encode({
+          'Quantity': max(1, quantity), // Ensure quantity is at least 1
+        }),
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        await fetchCartItems(); // Refresh cart items
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Update quantity error: $e');
+      return false;
+    }
+  }
+
+  // Clear cart via API
+  static Future<bool> clearCart() async {
+    if (!_authService.isAuthenticated) {
+      return false;
+    }
+
+    try {
+      final userId = _authService.currentUser?['AccountID'];
+      if (userId == null) {
+        return false;
+      }
+
+      final response = await http.delete(
+        Uri.parse('${AppConfig.apiBaseUrl}/carts/user/$userId/clear'),
+        headers: _authService.authHeaders,
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        _cartData.clear();
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      print('Clear cart error: $e');
+      return false;
     }
   }
 
@@ -79,8 +227,8 @@ class CartService {
     return _cartData.fold(0, (total, item) => total + item.quantity);
   }
 
-  // Clear cart
-  static void clearCart() {
-    _cartData.clear();
+  // Check if a book is already in the cart
+  static bool isInCart(int bookId) {
+    return _cartData.any((item) => int.parse(item.bookId) == bookId);
   }
 }

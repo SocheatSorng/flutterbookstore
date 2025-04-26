@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/models/book.dart';
+import 'package:flutterbookstore/services/auth_service.dart';
+import 'package:flutterbookstore/services/cart_service.dart';
 import 'package:flutterbookstore/views/screens/book_detail_page.dart';
+import 'package:flutterbookstore/views/screens/login_page.dart';
 
 class BookCard extends StatelessWidget {
   final String title;
@@ -45,231 +48,241 @@ class BookCard extends StatelessWidget {
       },
       child: Container(
         width: 150,
-        height: 280,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book Cover
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
+            Container(
+              width: 150,
+              height: 200,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, 5),
+                  ),
+                ],
               ),
-              child: SizedBox(
-                height: 150,
-                width: 150,
-                child: _buildCoverImage(),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child:
+                        coverImage.startsWith('http') ||
+                                coverImage.startsWith('https')
+                            ? Image.network(
+                              coverImage,
+                              width: 150,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 150,
+                                  height: 200,
+                                  color: AppColor.primary.withOpacity(0.1),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.book,
+                                        size: 40,
+                                        color: AppColor.primary,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        title,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColor.dark,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            )
+                            : Image.asset(
+                              coverImage,
+                              width: 150,
+                              height: 200,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  width: 150,
+                                  height: 200,
+                                  color: AppColor.primary.withOpacity(0.1),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.book,
+                                        size: 40,
+                                        color: AppColor.primary,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        title,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColor.dark,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                  ),
+                  // Add to cart button
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child:
+                        bookData != null
+                            ? AddToCartButton(book: bookData!)
+                            : SizedBox(),
+                  ),
+                ],
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+            SizedBox(height: 12),
+            // Title
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColor.dark,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 4),
+            // Author
+            Text(
+              'by $author',
+              style: TextStyle(fontSize: 12, color: AppColor.grey),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 8),
+            // Price and Rating
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Price
+                Text(
+                  '\$${price.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColor.primary,
+                  ),
+                ),
+                // Rating
+                Row(
                   children: [
-                    // Title
+                    Icon(Icons.star, color: Colors.amber, size: 14),
+                    SizedBox(width: 4),
                     Text(
-                      title,
+                      rating.toString(),
                       style: TextStyle(
-                        color: AppColor.dark,
-                        fontWeight: FontWeight.w600,
                         fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColor.dark,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    // Author
-                    Text(
-                      author,
-                      style: TextStyle(
-                        color: AppColor.grey,
-                        fontWeight: FontWeight.w400,
-                        fontSize: 10,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    // Rating
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                          size: 12,
-                        ),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating.toString(),
-                          style: TextStyle(
-                            color: AppColor.dark,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    // Price and Buy Now Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Price
-                        Text(
-                          '\$${price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            color: AppColor.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                        // Buy Now Icon Button
-                        InkWell(
-                          onTap: () {
-                            _showBuyNowDialog(context);
-                          },
-                          child: Icon(
-                            Icons.shopping_cart,
-                            color: AppColor.primary,
-                            size: 16,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildCoverImage() {
-    // Check if the coverImage is a remote URL or a local asset
-    bool isRemoteImage = coverImage.startsWith('http');
-    
-    if (isRemoteImage) {
-      return Image.network(
-        coverImage,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          // Fallback widget if the image fails to load
-          return Container(
-            color: AppColor.lightGrey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.broken_image, size: 36, color: AppColor.grey),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    'Image not available',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: AppColor.lightGrey,
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                    : null,
-                color: AppColor.primary,
-              ),
-            ),
-          );
-        },
-      );
-    } else {
-      // Original fallback for local assets or missing images
-      return Container(
-        color: AppColor.lightGrey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.book, size: 36, color: AppColor.grey),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColor.dark,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+class AddToCartButton extends StatefulWidget {
+  final Book book;
+
+  const AddToCartButton({Key? key, required this.book}) : super(key: key);
+
+  @override
+  _AddToCartButtonState createState() => _AddToCartButtonState();
+}
+
+class _AddToCartButtonState extends State<AddToCartButton> {
+  bool _isLoading = false;
+  final AuthService _authService = AuthService();
+
+  Future<void> _addToCart() async {
+    // Check if user is logged in
+    if (!_authService.isAuthenticated) {
+      _showLoginRequiredDialog();
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await CartService.addToCart(widget.book, quantity: 1);
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${widget.book.title} added to your cart!'),
+            backgroundColor: AppColor.primary,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add to cart. Please try again.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 1),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
-  void _showBuyNowDialog(BuildContext context) {
+  void _showLoginRequiredDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Buy Now'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Do you want to purchase:'),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text('by $author'),
-              const SizedBox(height: 10),
-              Text(
-                'Price: \$${price.toStringAsFixed(2)}',
-                style: TextStyle(
-                  color: AppColor.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Proceed to checkout?',
-                style: TextStyle(
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ],
-          ),
+          title: Text('Login Required'),
+          content: Text('You need to login to add items to your cart.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -279,23 +292,62 @@ class BookCard extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // Future implementation for checkout
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Added to cart!'),
-                    backgroundColor: AppColor.primary,
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
+              child: Text('Login'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
               ),
-              child: Text('Add to Cart'),
             ),
           ],
         );
       },
     );
   }
-} 
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColor.primary,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: _isLoading ? null : _addToCart,
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child:
+                _isLoading
+                    ? Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : Icon(
+                      Icons.add_shopping_cart,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+          ),
+        ),
+      ),
+    );
+  }
+}

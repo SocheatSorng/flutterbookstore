@@ -14,6 +14,66 @@ class CartTile extends StatefulWidget {
 }
 
 class _CartTileState extends State<CartTile> {
+  bool _isUpdating = false;
+  bool _isRemoving = false;
+
+  Future<void> _updateQuantity(int newQuantity) async {
+    if (_isUpdating) return;
+
+    setState(() {
+      _isUpdating = true;
+    });
+
+    try {
+      // Make sure quantity is at least 1
+      if (newQuantity < 1) newQuantity = 1;
+
+      await CartService.updateQuantity(widget.cart.id, newQuantity);
+      widget.onQuantityChanged();
+    } catch (e) {
+      print('Error updating quantity: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update quantity'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdating = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _removeItem() async {
+    if (_isRemoving) return;
+
+    setState(() {
+      _isRemoving = true;
+    });
+
+    try {
+      await CartService.removeFromCart(widget.cart.id);
+      widget.onQuantityChanged();
+    } catch (e) {
+      print('Error removing item: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to remove item from cart'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRemoving = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -34,11 +94,28 @@ class _CartTileState extends State<CartTile> {
             margin: EdgeInsets.only(right: 16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
-                image: AssetImage(widget.cart.image),
-                fit: BoxFit.cover,
-              ),
+              color: widget.cart.image.isEmpty ? AppColor.lightGrey : null,
             ),
+            child:
+                widget.cart.image.isEmpty
+                    ? Icon(Icons.book, size: 40, color: AppColor.primary)
+                    : ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        widget.cart.image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: AppColor.lightGrey,
+                            child: Icon(
+                              Icons.book,
+                              size: 40,
+                              color: AppColor.primary,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
           ),
           // Info
           Expanded(
@@ -60,7 +137,7 @@ class _CartTileState extends State<CartTile> {
                 SizedBox(height: 6),
                 // Product price
                 Text(
-                  'Rp ${widget.cart.price.toStringAsFixed(0)}',
+                  '\$${widget.cart.price.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -71,87 +148,107 @@ class _CartTileState extends State<CartTile> {
                 // Quantity
                 Row(
                   children: [
-                    // Decrease quantity button
+                    // Decrease Button
                     GestureDetector(
-                      onTap: () {
-                        if (widget.cart.quantity > 1) {
-                          CartService.updateQuantity(
-                            widget.cart.id,
-                            widget.cart.quantity - 1,
-                          );
-                          setState(() {});
-                          widget.onQuantityChanged();
-                        }
-                      },
+                      onTap:
+                          _isUpdating
+                              ? null
+                              : () => _updateQuantity(widget.cart.quantity - 1),
                       child: Container(
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: AppColor.primarySoft,
+                          borderRadius: BorderRadius.circular(4),
+                          color: AppColor.lightGrey,
                         ),
-                        child: Icon(
-                          Icons.remove,
-                          size: 16,
-                          color: AppColor.primary,
-                        ),
+                        child:
+                            _isUpdating
+                                ? SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColor.primary,
+                                  ),
+                                )
+                                : Icon(
+                                  Icons.remove,
+                                  size: 16,
+                                  color: AppColor.dark,
+                                ),
                       ),
                     ),
                     // Quantity
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 8),
                       child: Text(
-                        '${widget.cart.quantity}',
+                        widget.cart.quantity.toString(),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: AppColor.secondary,
+                          color: AppColor.dark,
                         ),
                       ),
                     ),
-                    // Increase quantity button
+                    // Increase Button
                     GestureDetector(
-                      onTap: () {
-                        CartService.updateQuantity(
-                          widget.cart.id,
-                          widget.cart.quantity + 1,
-                        );
-                        setState(() {});
-                        widget.onQuantityChanged();
-                      },
+                      onTap:
+                          _isUpdating
+                              ? null
+                              : () => _updateQuantity(widget.cart.quantity + 1),
                       child: Container(
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: AppColor.primarySoft,
+                          borderRadius: BorderRadius.circular(4),
+                          color: AppColor.lightGrey,
                         ),
-                        child: Icon(
-                          Icons.add,
-                          size: 16,
-                          color: AppColor.primary,
-                        ),
+                        child:
+                            _isUpdating
+                                ? SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColor.primary,
+                                  ),
+                                )
+                                : Icon(
+                                  Icons.add,
+                                  size: 16,
+                                  color: AppColor.dark,
+                                ),
                       ),
                     ),
                     Spacer(),
-                    // Remove button
+                    // Remove Button
                     GestureDetector(
-                      onTap: () {
-                        CartService.removeFromCart(widget.cart.id);
-                        widget.onQuantityChanged();
-                      },
+                      onTap: _isRemoving ? null : _removeItem,
                       child: Container(
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          color:
+                              _isRemoving
+                                  ? Colors.red.withOpacity(0.3)
+                                  : Colors.red.withOpacity(0.1),
                         ),
-                        child: Icon(
-                          Icons.delete_outline,
-                          size: 16,
-                          color: Colors.red,
-                        ),
+                        child:
+                            _isRemoving
+                                ? SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.red,
+                                  ),
+                                )
+                                : Icon(
+                                  Icons.delete_outline,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
                       ),
                     ),
                   ],
