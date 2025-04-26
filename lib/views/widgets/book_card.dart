@@ -21,7 +21,7 @@ class BookCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 150,
-      height: 320,
+      height: 280,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -34,7 +34,6 @@ class BookCard extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Book Cover
           ClipRRect(
@@ -42,13 +41,18 @@ class BookCard extends StatelessWidget {
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
             ),
-            child: _buildCoverImage(),
+            child: SizedBox(
+              height: 150,
+              width: 150,
+              child: _buildCoverImage(),
+            ),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   // Title
                   Text(
@@ -56,39 +60,39 @@ class BookCard extends StatelessWidget {
                     style: TextStyle(
                       color: AppColor.dark,
                       fontWeight: FontWeight.w600,
-                      fontSize: 14,
+                      fontSize: 12,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 3),
                   // Author
                   Text(
                     author,
                     style: TextStyle(
                       color: AppColor.grey,
                       fontWeight: FontWeight.w400,
-                      fontSize: 12,
+                      fontSize: 10,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 3),
                   // Rating
                   Row(
                     children: [
                       Icon(
                         Icons.star,
                         color: Colors.amber,
-                        size: 16,
+                        size: 12,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 2),
                       Text(
                         rating.toString(),
                         style: TextStyle(
                           color: AppColor.dark,
                           fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -104,7 +108,7 @@ class BookCard extends StatelessWidget {
                         style: TextStyle(
                           color: AppColor.primary,
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                       // Buy Now Icon Button
@@ -112,17 +116,10 @@ class BookCard extends StatelessWidget {
                         onTap: () {
                           _showBuyNowDialog(context);
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: AppColor.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.shopping_cart,
-                            color: Colors.white,
-                            size: 18,
-                          ),
+                        child: Icon(
+                          Icons.shopping_cart,
+                          color: AppColor.primary,
+                          size: 16,
                         ),
                       ),
                     ],
@@ -141,74 +138,70 @@ class BookCard extends StatelessWidget {
     bool isRemoteImage = coverImage.startsWith('http');
     
     if (isRemoteImage) {
-      return Container(
-        height: 180,
-        width: 150,
-        child: Image.network(
-          coverImage,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            // Fallback widget if the image fails to load
-            return Container(
-              height: 180,
-              width: 150,
-              color: AppColor.lightGrey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.broken_image, size: 50, color: AppColor.grey),
-                  const SizedBox(height: 10),
-                  Text(
+      return Image.network(
+        coverImage,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback widget if the image fails to load
+          return Container(
+            color: AppColor.lightGrey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.broken_image, size: 36, color: AppColor.grey),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
                     'Image not available',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColor.grey,
-                      fontSize: 12,
+                      fontSize: 10,
                     ),
                   ),
-                ],
-              ),
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              height: 180,
-              width: 150,
-              color: AppColor.lightGrey,
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                      : null,
-                  color: AppColor.primary,
                 ),
+              ],
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: AppColor.lightGrey,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                color: AppColor.primary,
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       );
     } else {
       // Original fallback for local assets or missing images
       return Container(
-        height: 180,
-        width: 150,
         color: AppColor.lightGrey,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.book, size: 50, color: AppColor.grey),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColor.dark,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+            Icon(Icons.book, size: 36, color: AppColor.grey),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColor.dark,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
