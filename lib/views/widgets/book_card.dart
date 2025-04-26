@@ -137,29 +137,83 @@ class BookCard extends StatelessWidget {
   }
 
   Widget _buildCoverImage() {
-    return Container(
-      height: 180,
-      width: 150,
-      color: AppColor.lightGrey,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.book, size: 50, color: AppColor.grey),
-          const SizedBox(height: 10),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppColor.dark,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+    // Check if the coverImage is a remote URL or a local asset
+    bool isRemoteImage = coverImage.startsWith('http');
+    
+    if (isRemoteImage) {
+      return Container(
+        height: 180,
+        width: 150,
+        child: Image.network(
+          coverImage,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            // Fallback widget if the image fails to load
+            return Container(
+              height: 180,
+              width: 150,
+              color: AppColor.lightGrey,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.broken_image, size: 50, color: AppColor.grey),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Image not available',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColor.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              height: 180,
+              width: 150,
+              color: AppColor.lightGrey,
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: AppColor.primary,
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    } else {
+      // Original fallback for local assets or missing images
+      return Container(
+        height: 180,
+        width: 150,
+        color: AppColor.lightGrey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.book, size: 50, color: AppColor.grey),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColor.dark,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
   }
 
   void _showBuyNowDialog(BuildContext context) {

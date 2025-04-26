@@ -2,35 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 
 class CategoryCard extends StatelessWidget {
-  final String name;
-  final String iconPath;
+  final String categoryName;
 
   const CategoryCard({
     Key? key,
-    required this.name,
-    required this.iconPath,
+    required this.categoryName,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.all(12),
+      width: 100, // Fixed width
+      height: 100, // Fixed height
       decoration: BoxDecoration(
-        color: AppColor.lightGrey,
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 1,
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.all(8.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _getCategoryIcon(name),
+          Icon(
+            _getCategoryIcon(categoryName),
+            size: 40,
+            color: Theme.of(context).primaryColor,
+          ),
           const SizedBox(height: 8),
-          Text(
-            name,
-            style: TextStyle(
-              color: AppColor.dark,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
+          Flexible(
+            child: Text(
+              categoryName,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
@@ -38,30 +53,28 @@ class CategoryCard extends StatelessWidget {
     );
   }
 
-  Widget _getCategoryIcon(String category) {
-    // Use default icons based on category name
-    IconData iconData;
+  IconData _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
       case 'fiction':
-        iconData = Icons.book;
-        break;
+        return Icons.book;
       case 'non-fiction':
-        iconData = Icons.menu_book;
-        break;
+        return Icons.menu_book;
       case 'science':
-        iconData = Icons.science;
-        break;
+        return Icons.science;
       case 'history':
-        iconData = Icons.history;
-        break;
+        return Icons.history_edu;
+      case 'biography':
+        return Icons.person;
+      case 'children':
+        return Icons.child_care;
+      case 'comics':
+        return Icons.bubble_chart;
+      case 'art':
+        return Icons.palette;
+      case 'cooking':
+        return Icons.restaurant;
       default:
-        iconData = Icons.category;
+        return Icons.category;
     }
-
-    return Icon(
-      iconData,
-      size: 30,
-      color: AppColor.primary,
-    );
   }
 } 
