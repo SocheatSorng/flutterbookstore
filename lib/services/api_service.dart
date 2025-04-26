@@ -315,4 +315,55 @@ class ApiService {
       throw Exception('Failed to load book: $e');
     }
   }
+
+  // Search books by query
+  Future<List<Book>> searchBooks(String query) async {
+    try {
+      // Verify network connection first
+      bool isConnected = await isConnectedToNetwork();
+      if (!isConnected) {
+        throw Exception('No network connection available');
+      }
+
+      // Check if query is empty
+      if (query.trim().isEmpty) {
+        return getBooks(); // Return all books if query is empty
+      }
+
+      // Encode the query for URL
+      final encodedQuery = Uri.encodeComponent(query);
+      final response = await _getWithRetry('$baseUrl/books/search?q=$encodedQuery');
+      
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> booksJson = data['data'];
+          return booksJson.map((json) => Book.fromJson(json)).toList();
+        } else {
+          // If API doesn't support search or returns error, do client-side filtering
+          final booksList = await getBooks();
+          
+          // Filter the books that match the query
+          return booksList.where((book) {
+            final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
+            final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
+            return titleMatch || authorMatch;
+          }).toList();
+        }
+      } catch (parseError) {
+        // Fallback to client-side search if API fails
+        final booksList = await getBooks();
+        
+        // Filter the books that match the query
+        return booksList.where((book) {
+          final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
+          final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
+          return titleMatch || authorMatch;
+        }).toList();
+      }
+    } catch (e) {
+      throw Exception('Failed to search books: $e');
+    }
+  }
 }
