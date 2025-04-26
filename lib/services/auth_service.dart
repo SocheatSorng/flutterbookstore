@@ -76,6 +76,31 @@ class AuthService {
     }
   }
 
+  // Register function
+  Future<bool> register(String fullName, String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${AppConfig.apiBaseUrl}/register'),
+        headers: apiKeyHeaders,
+        body: json.encode({
+          'name': fullName,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Logout function
   Future<bool> logout() async {
     try {

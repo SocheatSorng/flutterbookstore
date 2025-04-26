@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
+import 'package:flutterbookstore/views/screens/register_page.dart';
+import 'package:flutterbookstore/views/screens/home_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({Key? key}) : super(key: key);
@@ -27,11 +29,7 @@ class WelcomePage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.menu_book,
-                        size: 100,
-                        color: AppColor.primary,
-                      ),
+                      Icon(Icons.menu_book, size: 100, color: AppColor.primary),
                       const SizedBox(height: 16),
                       Text(
                         'Book Store App',
@@ -64,30 +62,87 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Sign In',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColor.primarySoft,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Register',
+                          style: TextStyle(
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 width: MediaQuery.of(context).size.width,
                 height: 50,
-                child: ElevatedButton(
+                child: TextButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => const HomePage()),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColor.primary,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColor.dark,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: AppColor.border),
                     ),
                   ),
                   child: const Text(
-                    'Get Started',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
+                    'Continue as Guest',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                 ),
               ),
@@ -97,4 +152,4 @@ class WelcomePage extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
+import 'package:flutterbookstore/services/auth_service.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
+import 'package:flutterbookstore/views/screens/register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -13,6 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -31,10 +34,7 @@ class _LoginPageState extends State<LoginPage> {
         iconTheme: IconThemeData(color: AppColor.dark),
         title: Text(
           'Sign In (Optional)',
-          style: TextStyle(
-            color: AppColor.dark,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(color: AppColor.dark, fontWeight: FontWeight.w600),
         ),
       ),
       body: SafeArea(
@@ -51,10 +51,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColor.primary,
-                  ),
+                  Icon(Icons.info_outline, color: AppColor.primary),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
@@ -108,14 +105,10 @@ class _LoginPageState extends State<LoginPage> {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColor.primary,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
                 child: const Text(
                   'Forgot Password?',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -124,12 +117,56 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const HomePage(),
-                    ),
-                  );
+                onPressed: () async {
+                  if (_emailController.text.isEmpty ||
+                      _passwordController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter both email and password'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Show loading indicator
+                  setState(() {
+                    _isLoading = true;
+                  });
+
+                  try {
+                    final success = await AuthService().login(
+                      _emailController.text,
+                      _passwordController.text,
+                    );
+
+                    if (success) {
+                      // Navigate to home page
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const HomePage(),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Invalid email or password'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('An error occurred. Please try again.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColor.primary,
@@ -137,14 +174,24 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  'Login',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
               ),
             ),
             const SizedBox(height: 20),
@@ -164,10 +211,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 child: const Text(
                   'Continue as Guest',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
               ),
             ),
@@ -175,12 +219,7 @@ class _LoginPageState extends State<LoginPage> {
             // Or Divider
             Row(
               children: [
-                Expanded(
-                  child: Divider(
-                    color: AppColor.border,
-                    thickness: 1,
-                  ),
-                ),
+                Expanded(child: Divider(color: AppColor.border, thickness: 1)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
@@ -191,12 +230,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                 ),
-                Expanded(
-                  child: Divider(
-                    color: AppColor.border,
-                    thickness: 1,
-                  ),
-                ),
+                Expanded(child: Divider(color: AppColor.border, thickness: 1)),
               ],
             ),
             const SizedBox(height: 24),
@@ -206,20 +240,22 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 Text(
                   'Don\'t have an account?',
-                  style: TextStyle(
-                    color: AppColor.grey,
-                  ),
+                  style: TextStyle(color: AppColor.grey),
                 ),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RegisterPage(),
+                      ),
+                    );
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: AppColor.primary,
                   ),
                   child: const Text(
                     'Register',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -241,33 +277,27 @@ class _LoginPageState extends State<LoginPage> {
       controller: controller,
       obscureText: isPassword ? _obscureText : false,
       keyboardType: keyboardType,
-      style: TextStyle(
-        color: AppColor.dark,
-      ),
+      style: TextStyle(color: AppColor.dark),
       decoration: InputDecoration(
         filled: true,
         fillColor: AppColor.lightGrey,
         hintText: hintText,
-        hintStyle: TextStyle(
-          color: AppColor.grey,
-        ),
-        prefixIcon: Icon(
-          prefixIcon,
-          color: AppColor.grey,
-        ),
-        suffixIcon: isPassword
-            ? IconButton(
-                icon: Icon(
-                  _obscureText ? Icons.visibility_off : Icons.visibility,
-                  color: AppColor.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscureText = !_obscureText;
-                  });
-                },
-              )
-            : null,
+        hintStyle: TextStyle(color: AppColor.grey),
+        prefixIcon: Icon(prefixIcon, color: AppColor.grey),
+        suffixIcon:
+            isPassword
+                ? IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: AppColor.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+                : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -276,4 +306,4 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
   }
-} 
+}

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
+import 'package:flutterbookstore/services/auth_service.dart';
+import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/views/widgets/main_app_bar_widget.dart';
 import 'package:flutterbookstore/views/widgets/menu_tile_widget.dart';
 
@@ -11,8 +13,127 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _isAuthenticated = false;
+  Map<String, dynamic>? _userData;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    final authService = AuthService();
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (authService.isAuthenticated) {
+      final user = await authService.getCurrentUser();
+      setState(() {
+        _isAuthenticated = true;
+        _userData = user;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isAuthenticated = false;
+        _isLoading = false;
+      });
+
+      // Redirect to login after a short delay
+      Future.delayed(Duration(milliseconds: 300), () {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+      });
+    }
+  }
+
+  Future<void> _handleLogout() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final authService = AuthService();
+    await authService.logout();
+
+    setState(() {
+      _isAuthenticated = false;
+      _userData = null;
+      _isLoading = false;
+    });
+
+    // Redirect to login
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: const MainAppBar(cartValue: 0, chatValue: 0),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!_isAuthenticated) {
+      return Scaffold(
+        appBar: const MainAppBar(cartValue: 0, chatValue: 0),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.account_circle_outlined,
+                size: 100,
+                color: AppColor.primary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please sign in to view your profile',
+                style: TextStyle(
+                  color: AppColor.secondary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Sign In',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // User is authenticated, show profile
     return Scaffold(
       appBar: const MainAppBar(cartValue: 2, chatValue: 2),
       body: ListView(
@@ -63,9 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 // Fullname
                 Container(
                   margin: const EdgeInsets.only(bottom: 4, top: 14),
-                  child: const Text(
-                    'Jane Doe',
-                    style: TextStyle(
+                  child: Text(
+                    _userData?['name'] ?? 'Book Reader',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -74,7 +195,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 // Username
                 Text(
-                  '@janedoe',
+                  _userData?['email'] ?? 'reader@example.com',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
                     fontSize: 14,
@@ -183,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   subtitle: 'Change app language and preferences',
                 ),
                 MenuTileWidget(
-                  onTap: () {},
+                  onTap: _handleLogout,
                   icon: const Icon(Icons.logout, color: Colors.red),
                   iconBackground: Colors.red[100],
                   title: 'Log Out',
