@@ -11,10 +11,19 @@ class ApiService {
   // Use the centralized AppConfig for API URL
   static String get baseUrl => AppConfig.apiBaseUrl;
 
+  // Default HTTP headers with API key authentication
+  static Map<String, String> get defaultHeaders => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-API-Key': AppConfig.apiKey,
+  };
+
   // Check if the device is connected to the network
   Future<bool> isConnectedToNetwork() async {
     try {
-      final List<InternetAddress> result = await InternetAddress.lookup('google.com');
+      final List<InternetAddress> result = await InternetAddress.lookup(
+        'google.com',
+      );
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } on SocketException catch (_) {
       return false;
@@ -34,17 +43,18 @@ class ApiService {
     int attempts = 0;
     int backoffDelay = AppConfig.retryDelaySeconds;
     late http.Response response;
-    
+
     while (attempts < AppConfig.maxRetryAttempts) {
       try {
-        response = await client.get(Uri.parse(url))
+        response = await client
+            .get(Uri.parse(url), headers: defaultHeaders)
             .timeout(Duration(seconds: AppConfig.connectionTimeoutSeconds));
-        
+
         client.close();
         if (response.statusCode == 200) {
           return response;
         }
-        
+
         // If response code is not 200, try again with exponential backoff
         attempts++;
         if (attempts < AppConfig.maxRetryAttempts) {
@@ -63,9 +73,52 @@ class ApiService {
         backoffDelay *= 2; // Double the delay for next retry
       }
     }
-    
+
     client.close();
     return response;
+  }
+
+  // POST request with API key
+  Future<http.Response> _post(String url, Map<String, dynamic> body) async {
+    final client = createClient();
+    try {
+      final response = await client
+          .post(
+            Uri.parse(url),
+            headers: defaultHeaders,
+            body: json.encode(body),
+          )
+          .timeout(Duration(seconds: AppConfig.connectionTimeoutSeconds));
+      return response;
+    } finally {
+      client.close();
+    }
+  }
+
+  // PUT request with API key
+  Future<http.Response> _put(String url, Map<String, dynamic> body) async {
+    final client = createClient();
+    try {
+      final response = await client
+          .put(Uri.parse(url), headers: defaultHeaders, body: json.encode(body))
+          .timeout(Duration(seconds: AppConfig.connectionTimeoutSeconds));
+      return response;
+    } finally {
+      client.close();
+    }
+  }
+
+  // DELETE request with API key
+  Future<http.Response> _delete(String url) async {
+    final client = createClient();
+    try {
+      final response = await client
+          .delete(Uri.parse(url), headers: defaultHeaders)
+          .timeout(Duration(seconds: AppConfig.connectionTimeoutSeconds));
+      return response;
+    } finally {
+      client.close();
+    }
   }
 
   // Diagnostic function to check server connection
@@ -76,21 +129,22 @@ class ApiService {
       'responseTime': 0,
       'error': null,
     };
-    
+
     // First check if we're connected to a network
     bool networkConnected = await isConnectedToNetwork();
     if (!networkConnected) {
       result['error'] = 'Device not connected to any network';
       return result;
     }
-    
+
     final stopwatch = Stopwatch()..start();
     final client = createClient();
-    
+
     try {
-      final response = await client.get(Uri.parse(baseUrl))
+      final response = await client
+          .get(Uri.parse(baseUrl), headers: defaultHeaders)
           .timeout(Duration(seconds: 5)); // Short timeout for quick check
-      
+
       result['isConnected'] = response.statusCode == 200;
       result['statusCode'] = response.statusCode;
       result['responseTime'] = stopwatch.elapsedMilliseconds;
@@ -100,7 +154,7 @@ class ApiService {
       stopwatch.stop();
       client.close();
     }
-    
+
     return result;
   }
 
@@ -112,16 +166,18 @@ class ApiService {
       if (!isConnected) {
         throw Exception('No network connection available');
       }
-      
+
       final response = await _getWithRetry('$baseUrl/books');
-      
+
       final Map<String, dynamic> data = json.decode(response.body);
-      
+
       if (data['success'] == true && data['data'] != null) {
         final List<dynamic> booksJson = data['data'];
         return booksJson.map((json) => Book.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load books: ${data['message'] ?? 'Unknown error'}');
+        throw Exception(
+          'Failed to load books: ${data['message'] ?? 'Unknown error'}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to load books: $e');
@@ -136,16 +192,20 @@ class ApiService {
       if (!isConnected) {
         throw Exception('No network connection available');
       }
-      
+
       final response = await _getWithRetry('$baseUrl/categories');
-      
+
       final Map<String, dynamic> data = json.decode(response.body);
-      
+
       if (data['success'] == true && data['data'] != null) {
         final List<dynamic> categoriesJson = data['data'];
-        return categoriesJson.map((json) => BookCategory.fromJson(json)).toList();
+        return categoriesJson
+            .map((json) => BookCategory.fromJson(json))
+            .toList();
       } else {
-        throw Exception('Failed to load categories: ${data['message'] ?? 'Unknown error'}');
+        throw Exception(
+          'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to load categories: $e');
@@ -160,18 +220,20 @@ class ApiService {
       if (!isConnected) {
         throw Exception('No network connection available');
       }
-      
+
       final response = await _getWithRetry('$baseUrl/books/$id');
-      
+
       final Map<String, dynamic> data = json.decode(response.body);
-      
+
       if (data['success'] == true && data['data'] != null) {
         return Book.fromJson(data['data']);
       } else {
-        throw Exception('Failed to load book: ${data['message'] ?? 'Unknown error'}');
+        throw Exception(
+          'Failed to load book: ${data['message'] ?? 'Unknown error'}',
+        );
       }
     } catch (e) {
       throw Exception('Failed to load book: $e');
     }
   }
-} 
+}

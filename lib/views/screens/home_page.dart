@@ -5,6 +5,7 @@ import 'package:flutterbookstore/models/book.dart';
 import 'package:flutterbookstore/models/category.dart';
 import 'package:flutterbookstore/services/api_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
+import 'package:flutterbookstore/views/screens/api_test_page.dart';
 import 'package:flutterbookstore/views/widgets/book_card.dart';
 import 'package:flutterbookstore/views/widgets/category_card.dart';
 
@@ -38,10 +39,10 @@ class _HomePageState extends State<HomePage> {
     try {
       // Fetch books from API
       _books = await _apiService.getBooks();
-      
+
       // Fetch categories from API
       _categories = await _apiService.getCategories();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -64,9 +65,10 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
-      body: _errorMessage.isNotEmpty
-          ? _buildErrorWidget()
-          : _isLoading
+      body:
+          _errorMessage.isNotEmpty
+              ? _buildErrorWidget()
+              : _isLoading
               ? _buildLoadingWidget()
               : _buildBody(),
       bottomNavigationBar: _buildBottomNavBar(),
@@ -78,36 +80,41 @@ class _HomePageState extends State<HomePage> {
     String errorTitle = 'Error Loading Data';
     String errorMessage = _errorMessage;
     List<String> troubleshootingTips = [];
-    
-    if (_errorMessage.contains('SocketException') || _errorMessage.contains('Connection refused') || _errorMessage.contains('Connection timed out')) {
+
+    if (_errorMessage.contains('SocketException') ||
+        _errorMessage.contains('Connection refused') ||
+        _errorMessage.contains('Connection timed out')) {
       errorTitle = 'Connection Error';
-      errorMessage = 'Could not connect to the API server at ${AppConfig.apiBaseUrl}';
-      
+      errorMessage =
+          'Could not connect to the API server at ${AppConfig.apiBaseUrl}';
+
       troubleshootingTips = [
         '• Check your internet connection',
         '• The remote server might be down',
         '• Try again later',
-        '• If problem persists, contact support'
+        '• If problem persists, contact support',
       ];
     } else if (_errorMessage.contains('Invalid host')) {
       errorTitle = 'Invalid Host';
       errorMessage = 'The API server address is invalid';
       troubleshootingTips = [
         '• Check the API server settings',
-        '• Current server: ${AppConfig.apiHost}'
+        '• Current server: ${AppConfig.apiHost}',
       ];
-    } else if (_errorMessage.contains('TimeoutException') || _errorMessage.contains('Future not completed')) {
+    } else if (_errorMessage.contains('TimeoutException') ||
+        _errorMessage.contains('Future not completed')) {
       errorTitle = 'Server Timeout';
-      errorMessage = 'The API server at ${AppConfig.apiBaseUrl} is taking too long to respond';
-      
+      errorMessage =
+          'The API server at ${AppConfig.apiBaseUrl} is taking too long to respond';
+
       troubleshootingTips = [
         '• The server might be experiencing high traffic',
         '• Your internet connection might be slow',
         '• Try again later',
-        '• If problem persists, contact support'
+        '• If problem persists, contact support',
       ];
     }
-    
+
     return SingleChildScrollView(
       child: Center(
         child: Padding(
@@ -115,11 +122,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                color: AppColor.primary,
-                size: 60,
-              ),
+              Icon(Icons.error_outline, color: AppColor.primary, size: 60),
               const SizedBox(height: 16),
               Text(
                 errorTitle,
@@ -133,10 +136,7 @@ class _HomePageState extends State<HomePage> {
               Text(
                 errorMessage,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColor.grey,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: AppColor.grey, fontSize: 14),
               ),
               if (troubleshootingTips.isNotEmpty) ...[
                 const SizedBox(height: 24),
@@ -154,10 +154,7 @@ class _HomePageState extends State<HomePage> {
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Text(
                       tip,
-                      style: TextStyle(
-                        color: AppColor.grey,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColor.grey, fontSize: 14),
                     ),
                   ),
                 ),
@@ -170,7 +167,10 @@ class _HomePageState extends State<HomePage> {
                     onPressed: _fetchData,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: Text('Try Again'),
                   ),
@@ -181,32 +181,28 @@ class _HomePageState extends State<HomePage> {
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: AppColor.primary),
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                     child: Text(
                       'Server Settings',
-                      style: TextStyle(
-                        color: AppColor.primary,
-                      ),
+                      style: TextStyle(color: AppColor.primary),
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
               TextButton.icon(
                 onPressed: () {
                   _runNetworkDiagnostics();
                 },
-                icon: Icon(
-                  Icons.network_check,
-                  color: AppColor.primary,
-                ),
+                icon: Icon(Icons.network_check, color: AppColor.primary),
                 label: Text(
                   'Run Network Diagnostics',
-                  style: TextStyle(
-                    color: AppColor.primary,
-                  ),
+                  style: TextStyle(color: AppColor.primary),
                 ),
               ),
             ],
@@ -221,16 +217,11 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: AppColor.primary,
-          ),
+          CircularProgressIndicator(color: AppColor.primary),
           const SizedBox(height: 16),
           Text(
             'Loading books...',
-            style: TextStyle(
-              color: AppColor.grey,
-              fontWeight: FontWeight.w500,
-            ),
+            style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -264,27 +255,28 @@ class _HomePageState extends State<HomePage> {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.api),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ApiTestPage()),
+            );
+          },
+          tooltip: 'Test API Connection',
+        ),
+        IconButton(
           onPressed: () {
             _showServerSettingsDialog();
           },
-          icon: Icon(
-            Icons.settings,
-            color: AppColor.dark,
-          ),
+          icon: Icon(Icons.settings, color: AppColor.dark),
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(
-            Icons.notifications_outlined,
-            color: AppColor.dark,
-          ),
+          icon: Icon(Icons.notifications_outlined, color: AppColor.dark),
         ),
         IconButton(
           onPressed: () {},
-          icon: Icon(
-            Icons.shopping_cart_outlined,
-            color: AppColor.dark,
-          ),
+          icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark),
         ),
       ],
     );
@@ -292,10 +284,16 @@ class _HomePageState extends State<HomePage> {
 
   // Show server settings dialog
   void _showServerSettingsDialog() {
-    final TextEditingController ipController = TextEditingController(text: AppConfig.apiHost);
-    final TextEditingController portController = TextEditingController(text: AppConfig.apiPort.toString());
-    final TextEditingController timeoutController = TextEditingController(text: AppConfig.connectionTimeoutSeconds.toString());
-    
+    final TextEditingController ipController = TextEditingController(
+      text: AppConfig.apiHost,
+    );
+    final TextEditingController portController = TextEditingController(
+      text: AppConfig.apiPort.toString(),
+    );
+    final TextEditingController timeoutController = TextEditingController(
+      text: AppConfig.connectionTimeoutSeconds.toString(),
+    );
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -332,19 +330,13 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 16),
               Text(
                 'Current API URL: ${AppConfig.apiBaseUrl}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColor.grey,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColor.grey),
               ),
               SizedBox(height: 8),
               if (_errorMessage.isNotEmpty)
                 Text(
                   'Last Error: ${_errorMessage.split(':').first}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.red,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.red),
                 ),
             ],
           ),
@@ -360,18 +352,18 @@ class _HomePageState extends State<HomePage> {
                 final newIp = ipController.text;
                 final newPort = int.tryParse(portController.text) ?? 8000;
                 final newTimeout = int.tryParse(timeoutController.text) ?? 30;
-                
+
                 if (newIp.isNotEmpty) {
                   setState(() {
                     AppConfig.apiHost = newIp;
                     AppConfig.apiPort = newPort;
                   });
-                  
+
                   Navigator.of(context).pop();
-                  
+
                   // Refresh data with new settings
                   _fetchData();
-                  
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Server settings updated!'),
@@ -409,18 +401,13 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.search,
-                    color: AppColor.grey,
-                  ),
+                  Icon(Icons.search, color: AppColor.grey),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       decoration: InputDecoration(
                         hintText: 'Search books, authors...',
-                        hintStyle: TextStyle(
-                          color: AppColor.grey,
-                        ),
+                        hintStyle: TextStyle(color: AppColor.grey),
                         border: InputBorder.none,
                       ),
                     ),
@@ -430,27 +417,27 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Banner Section
           _buildBannerSection(),
           const SizedBox(height: 24),
-          
+
           // Categories Section from API
           _buildCategoriesSection(),
           const SizedBox(height: 24),
-          
+
           // Popular Books Section
           _buildBooksSection('Popular Books', _books.take(5).toList()),
           const SizedBox(height: 24),
-          
+
           // New Releases Section
           _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
           const SizedBox(height: 24),
-          
+
           // Books From API
           _buildBooksSection('All Books', _books),
           const SizedBox(height: 24),
-          
+
           // Featured Author Section
           _buildFeaturedAuthorSection(),
           const SizedBox(height: 40),
@@ -477,46 +464,41 @@ class _HomePageState extends State<HomePage> {
               ),
               TextButton(
                 onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColor.primary,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
                 child: Text(
                   'See All',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Category List from API
         SizedBox(
           height: 105,
           child: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: _categories.isEmpty
-                ? Center(
-                    child: Text(
-                      'No categories available',
-                      style: TextStyle(color: AppColor.grey),
+            child:
+                _categories.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No categories available',
+                        style: TextStyle(color: AppColor.grey),
+                      ),
+                    )
+                    : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      itemBuilder: (context, index) {
+                        final category = _categories[index];
+                        return Padding(
+                          padding: EdgeInsets.only(right: 16),
+                          child: CategoryCard(categoryName: category.name),
+                        );
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final category = _categories[index];
-                      return Padding(
-                        padding: EdgeInsets.only(right: 16),
-                        child: CategoryCard(
-                          categoryName: category.name,
-                        ),
-                      );
-                    },
-                  ),
           ),
         ),
       ],
@@ -541,49 +523,46 @@ class _HomePageState extends State<HomePage> {
               ),
               TextButton(
                 onPressed: () {},
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColor.primary,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
                 child: Text(
                   'See All',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        
+
         SizedBox(
           height: 290,
           child: Padding(
             padding: const EdgeInsets.only(left: 16),
-            child: books.isEmpty
-                ? Center(
-                    child: Text(
-                      'No books available',
-                      style: TextStyle(color: AppColor.grey),
+            child:
+                books.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No books available',
+                        style: TextStyle(color: AppColor.grey),
+                      ),
+                    )
+                    : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: books.length,
+                      itemBuilder: (context, index) {
+                        final book = books[index];
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: BookCard(
+                            title: book.title,
+                            author: book.author,
+                            coverImage: book.image ?? 'assets/images/book1.jpg',
+                            price: book.price,
+                            rating: 4.5, // Default rating
+                          ),
+                        );
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: books.length,
-                    itemBuilder: (context, index) {
-                      final book = books[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 16),
-                        child: BookCard(
-                          title: book.title,
-                          author: book.author,
-                          coverImage: book.image ?? 'assets/images/book1.jpg',
-                          price: book.price,
-                          rating: 4.5, // Default rating
-                        ),
-                      );
-                    },
-                  ),
           ),
         ),
       ],
@@ -619,10 +598,7 @@ class _HomePageState extends State<HomePage> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
@@ -648,10 +624,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 Text(
                   'Up to 50% off on selected books',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -709,7 +682,9 @@ class _HomePageState extends State<HomePage> {
                   backgroundColor: AppColor.accent,
                   child: CircleAvatar(
                     radius: 38,
-                    backgroundImage: const AssetImage('assets/images/author.jpg'),
+                    backgroundImage: const AssetImage(
+                      'assets/images/author.jpg',
+                    ),
                     onBackgroundImageError: (_, __) {
                       // Handle error when image is not available
                     },
@@ -731,10 +706,7 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 8),
                       Text(
                         'Author of Harry Potter series and other magical books',
-                        style: TextStyle(
-                          color: AppColor.grey,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: AppColor.grey, fontSize: 14),
                       ),
                       const SizedBox(height: 12),
                       TextButton(
@@ -745,9 +717,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Text(
                           'View Profile',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
@@ -811,9 +781,7 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(
-                    color: AppColor.primary,
-                  ),
+                  CircularProgressIndicator(color: AppColor.primary),
                   SizedBox(height: 16),
                   Text('Testing connection to server...'),
                 ],
@@ -827,10 +795,10 @@ class _HomePageState extends State<HomePage> {
     try {
       // Check server connection
       final result = await _apiService.checkServerConnection();
-      
+
       // Close loading dialog
       Navigator.of(context).pop();
-      
+
       // Show results
       showDialog(
         context: context,
@@ -878,11 +846,13 @@ class _HomePageState extends State<HomePage> {
                   Text(
                     'The server is reachable, but the API endpoint might be taking too long to respond. Try increasing the timeout setting.',
                   )
-                else if (result['error'] != null && result['error'].toString().contains('SocketException'))
+                else if (result['error'] != null &&
+                    result['error'].toString().contains('SocketException'))
                   Text(
                     'The server is not reachable. Check your network connection and server IP address.',
                   )
-                else if (result['error'] != null && result['error'].toString().contains('TimeoutException'))
+                else if (result['error'] != null &&
+                    result['error'].toString().contains('TimeoutException'))
                   Text(
                     'The connection to the server timed out. The server might be overloaded or not responding.',
                   )
@@ -916,7 +886,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       // Close loading dialog
       Navigator.of(context).pop();
-      
+
       // Show error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -926,4 +896,4 @@ class _HomePageState extends State<HomePage> {
       );
     }
   }
-} 
+}

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
+import 'package:flutterbookstore/services/auth_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize auth service
+  await AuthService().init();
+
   // Set error handler for missing image assets
   ErrorWidget.builder = (FlutterErrorDetails details) {
     if (details.exception is FlutterError) {
@@ -20,7 +24,7 @@ void main() {
     }
     return const Center(child: Text('Error'));
   };
-  
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -54,19 +58,13 @@ class MyApp extends StatelessWidget {
             color: AppColor.dark,
             fontWeight: FontWeight.w600,
           ),
-          bodyLarge: TextStyle(
-            color: AppColor.dark,
-          ),
-          bodyMedium: TextStyle(
-            color: AppColor.dark,
-          ),
+          bodyLarge: TextStyle(color: AppColor.dark),
+          bodyMedium: TextStyle(color: AppColor.dark),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.white,
           elevation: 0,
-          iconTheme: IconThemeData(
-            color: AppColor.dark,
-          ),
+          iconTheme: IconThemeData(color: AppColor.dark),
           titleTextStyle: TextStyle(
             color: AppColor.dark,
             fontWeight: FontWeight.w600,
