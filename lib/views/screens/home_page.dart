@@ -73,6 +73,7 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isSearching = false;
         _filteredBooks = _books; // Reset to all books when query is empty
+        _errorMessage = '';
       });
       return;
     }
@@ -80,6 +81,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _isSearching = true;
       _searchQuery = query;
+      _errorMessage = '';
     });
 
     try {
@@ -92,13 +94,27 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       setState(() {
         _isSearching = false;
-        _errorMessage = e.toString();
+        _errorMessage = 'Search failed: ${e.toString()}';
+        
+        // Keep showing the current books instead of emptying the list
+        // This provides a better user experience when search fails
+        _filteredBooks = _books.where((book) {
+          final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
+          final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
+          return titleMatch || authorMatch;
+        }).toList();
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Search failed: ${e.toString()}'),
+          content: Text('Search error: Server unavailable'),
           backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: 'RETRY',
+            textColor: Colors.white,
+            onPressed: () => _searchBooks(query),
+          ),
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -348,102 +364,76 @@ class _HomePageState extends State<HomePage> {
 
   // Show server settings dialog
   void _showServerSettingsDialog() {
-    final TextEditingController ipController = TextEditingController(
-      text: AppConfig.apiHost,
-    );
-    final TextEditingController portController = TextEditingController(
-      text: AppConfig.apiPort.toString(),
-    );
-    final TextEditingController timeoutController = TextEditingController(
-      text: AppConfig.connectionTimeoutSeconds.toString(),
-    );
-
+    // Controllers for text fields
+    final hostController = TextEditingController(text: AppConfig.apiHost);
+    final portController = TextEditingController(text: AppConfig.apiPort.toString());
+    
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Server Settings'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: ipController,
-                decoration: InputDecoration(
-                  labelText: 'Server IP',
-                  hintText: 'e.g., 192.168.0.117',
-                ),
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: portController,
-                decoration: InputDecoration(
-                  labelText: 'Server Port',
-                  hintText: 'e.g., 8000',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 12),
-              TextField(
-                controller: timeoutController,
-                decoration: InputDecoration(
-                  labelText: 'Connection Timeout (seconds)',
-                  hintText: 'e.g., 30',
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Current API URL: ${AppConfig.apiBaseUrl}',
-                style: TextStyle(fontSize: 12, color: AppColor.grey),
-              ),
-              SizedBox(height: 8),
-              if (_errorMessage.isNotEmpty)
-                Text(
-                  'Last Error: ${_errorMessage.split(':').first}',
-                  style: TextStyle(fontSize: 12, color: Colors.red),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancel'),
+      builder: (context) => AlertDialog(
+        title: Text('Server Settings'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'These settings control the connection to your backend API server. '
+              'Changes will apply after restarting the app.',
+              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
             ),
-            ElevatedButton(
-              onPressed: () {
-                final newIp = ipController.text;
-                final newPort = int.tryParse(portController.text) ?? 8000;
-                final newTimeout = int.tryParse(timeoutController.text) ?? 30;
-
-                if (newIp.isNotEmpty) {
-                  setState(() {
-                    AppConfig.apiHost = newIp;
-                    AppConfig.apiPort = newPort;
-                  });
-
-                  Navigator.of(context).pop();
-
-                  // Refresh data with new settings
-                  _fetchData();
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Server settings updated!'),
-                      backgroundColor: AppColor.primary,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColor.primary,
+            SizedBox(height: 16),
+            TextField(
+              controller: hostController,
+              decoration: InputDecoration(
+                labelText: 'API Host',
+                border: OutlineInputBorder(),
+                helperText: 'Example: api.example.com or 192.168.1.100',
               ),
-              child: Text('Save'),
+            ),
+            SizedBox(height: 16),
+            TextField(
+              controller: portController,
+              decoration: InputDecoration(
+                labelText: 'API Port',
+                border: OutlineInputBorder(),
+                helperText: 'Standard HTTP port is 80, HTTPS is 443',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Current API URL: ${AppConfig.apiBaseUrl}',
+                    style: TextStyle(fontSize: 12, color: Colors.blue),
+                  ),
+                ),
+              ],
             ),
           ],
-        );
-      },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Save settings logic would go here (requires more infrastructure)
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Settings functionality is not implemented yet'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+              Navigator.of(context).pop();
+            },
+            child: Text('Save Settings'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -500,6 +490,73 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 24),
+          
+          // Error message display
+          if (_errorMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Error Loading Data',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: Icon(Icons.refresh, size: 16),
+                          label: Text('Run Network Diagnostics'),
+                          onPressed: () {
+                            // Add network diagnostics functionality
+                            _runNetworkDiagnostics();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: Icon(Icons.settings, size: 16),
+                          label: Text('Server Settings'),
+                          onPressed: () {
+                            // Navigate to server settings page
+                            _showServerSettingsDialog();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade100,
+                            foregroundColor: Colors.red.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           // Banner Section
           _buildBannerSection(),
@@ -540,25 +597,25 @@ class _HomePageState extends State<HomePage> {
               ),
             const SizedBox(height: 24),
           ] else ...[
-            // Categories Section from API
-            _buildCategoriesSection(),
-            const SizedBox(height: 24),
+          // Categories Section from API
+          _buildCategoriesSection(),
+          const SizedBox(height: 24),
 
-            // Popular Books Section
-            _buildBooksSection('Popular Books', _books.take(5).toList()),
-            const SizedBox(height: 24),
+          // Popular Books Section
+          _buildBooksSection('Popular Books', _books.take(5).toList()),
+          const SizedBox(height: 24),
 
-            // New Releases Section
-            _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
-            const SizedBox(height: 24),
+          // New Releases Section
+          _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
+          const SizedBox(height: 24),
 
-            // Books From API
-            _buildBooksSection('All Books', _books),
-            const SizedBox(height: 24),
+          // Books From API
+          _buildBooksSection('All Books', _books),
+          const SizedBox(height: 24),
 
-            // Featured Author Section
-            _buildFeaturedAuthorSection(),
-            const SizedBox(height: 40),
+          // Featured Author Section
+          _buildFeaturedAuthorSection(),
+          const SizedBox(height: 40),
           ],
         ],
       ),
@@ -889,131 +946,81 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _runNetworkDiagnostics() async {
-    // Show loading dialog
+  // Run network diagnostics and show results
+  Future<void> _runNetworkDiagnostics() async {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Running Diagnostics...'),
-          content: Container(
-            height: 100,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: AppColor.primary),
-                  SizedBox(height: 16),
-                  Text('Testing connection to server...'),
-                ],
-              ),
-            ),
+      builder: (context) => const AlertDialog(
+        title: Text('Running Diagnostics...'),
+        content: SizedBox(
+          height: 100,
+          child: Center(
+            child: CircularProgressIndicator(),
           ),
-        );
-      },
+        ),
+      ),
     );
 
     try {
-      // Check server connection
       final result = await _apiService.checkServerConnection();
-
-      // Close loading dialog
+      
+      // Pop the loading dialog
       Navigator.of(context).pop();
-
-      // Show results
+      
+      // Show the results
       showDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Network Diagnostics'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Server: ${AppConfig.apiBaseUrl}',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Connection: ${result['isConnected'] ? 'Success ✓' : 'Failed ✗'}',
-                  style: TextStyle(
-                    color: result['isConnected'] ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (result['statusCode'] != null)
-                  Text('Status Code: ${result['statusCode']}'),
-                if (result['responseTime'] > 0)
-                  Text('Response Time: ${result['responseTime']}ms'),
-                if (result['error'] != null) ...[
-                  SizedBox(height: 8),
-                  Text(
-                    'Error Details:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '${result['error']}',
+        builder: (context) => AlertDialog(
+          title: Text('Network Diagnostics Results'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Connected to network: ${result['isConnected'] ? 'Yes' : 'No'}'),
+              Text('Server response code: ${result['statusCode'] ?? 'N/A'}'),
+              Text('Response time: ${result['responseTime']}ms'),
+              if (result['error'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    'Error: ${result['error']}',
                     style: TextStyle(color: Colors.red),
                   ),
-                ],
-                SizedBox(height: 16),
-                Text(
-                  'What does this mean?',
-                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
-                if (result['isConnected'])
-                  Text(
-                    'The server is reachable, but the API endpoint might be taking too long to respond. Try increasing the timeout setting.',
-                  )
-                else if (result['error'] != null &&
-                    result['error'].toString().contains('SocketException'))
-                  Text(
-                    'The server is not reachable. Check your network connection and server IP address.',
-                  )
-                else if (result['error'] != null &&
-                    result['error'].toString().contains('TimeoutException'))
-                  Text(
-                    'The connection to the server timed out. The server might be overloaded or not responding.',
-                  )
-                else
-                  Text(
-                    'There was an error connecting to the server. Check your settings and try again.',
-                  ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Close'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _showServerSettingsDialog();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.primary,
-                ),
-                child: Text('Adjust Settings'),
-              ),
             ],
-          );
-        },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _fetchData(); // Retry data fetch
+              },
+              child: Text('Retry Fetch'),
+            ),
+          ],
+        ),
       );
     } catch (e) {
-      // Close loading dialog
+      // Pop the loading dialog
       Navigator.of(context).pop();
-
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Diagnostic failed: $e'),
-          backgroundColor: Colors.red,
+      
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Diagnostics Failed'),
+          content: Text('Could not run network diagnostics: $e'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
         ),
       );
     }

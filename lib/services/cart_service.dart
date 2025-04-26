@@ -52,20 +52,30 @@ class CartService {
     }
 
     try {
+      // Get the user ID from the current user data
       final userId = _authService.currentUser?['AccountID'];
       if (userId == null) {
+        print('User ID is null');
         return false;
       }
+
+      // Ensure we're sending user ID as integer if it's expected as int by the API
+      final userIdValue = userId is String ? int.tryParse(userId) ?? userId : userId;
+      
+      // Create a properly formatted request body with AccountID instead of UserID
+      final requestBody = {
+        'AccountID': userIdValue,  // Changed from UserID to AccountID
+        'BookID': book.bookID,
+        'Quantity': quantity,
+      };
+
+      print('Adding to cart: ${json.encode(requestBody)}');
 
       // Prepare API request
       final response = await http.post(
         Uri.parse('${AppConfig.apiBaseUrl}/carts'),
         headers: _authService.authHeaders,
-        body: json.encode({
-          'UserID': userId,
-          'BookID': book.bookID,
-          'Quantity': quantity,
-        }),
+        body: json.encode(requestBody),
       );
 
       // Handle API response

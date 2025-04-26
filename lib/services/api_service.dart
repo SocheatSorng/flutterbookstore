@@ -173,21 +173,21 @@ class ApiService {
       }
 
       final response = await _getWithRetry('$baseUrl/books');
-      
-      try {
-        final Map<String, dynamic> data = json.decode(response.body);
 
-        if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> booksJson = data['data'];
-          return booksJson.map((json) => Book.fromJson(json)).toList();
-        } else {
+      try {
+      final Map<String, dynamic> data = json.decode(response.body);
+
+      if (data['success'] == true && data['data'] != null) {
+        final List<dynamic> booksJson = data['data'];
+        return booksJson.map((json) => Book.fromJson(json)).toList();
+      } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
           if (directData is List) {
             return directData.map((json) => Book.fromJson(json)).toList();
           }
-          throw Exception(
-            'Failed to load books: ${data['message'] ?? 'Unknown error'}',
+        throw Exception(
+          'Failed to load books: ${data['message'] ?? 'Unknown error'}',
           );
         }
       } catch (parseError) {
@@ -224,22 +224,22 @@ class ApiService {
       final response = await _getWithRetry('$baseUrl/categories');
 
       try {
-        final Map<String, dynamic> data = json.decode(response.body);
+      final Map<String, dynamic> data = json.decode(response.body);
 
-        if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> categoriesJson = data['data'];
-          return categoriesJson
-              .map((json) => BookCategory.fromJson(json))
-              .toList();
-        } else {
+      if (data['success'] == true && data['data'] != null) {
+        final List<dynamic> categoriesJson = data['data'];
+        return categoriesJson
+            .map((json) => BookCategory.fromJson(json))
+            .toList();
+      } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
           if (directData is List) {
             return directData.map((json) => BookCategory.fromJson(json)).toList();
           }
-          throw Exception(
-            'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
-          );
+        throw Exception(
+          'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
+        );
         }
       } catch (parseError) {
         // If parsing fails, create mock data for testing
@@ -330,29 +330,36 @@ class ApiService {
         return getBooks(); // Return all books if query is empty
       }
 
-      // Encode the query for URL
-      final encodedQuery = Uri.encodeComponent(query);
-      final response = await _getWithRetry('$baseUrl/books/search?q=$encodedQuery');
-      
+      // Create a new http client for this request
+      final client = http.Client();
       try {
-        final Map<String, dynamic> data = json.decode(response.body);
+        // Encode the query for URL
+        final encodedQuery = Uri.encodeComponent(query);
+        final uri = Uri.parse('$baseUrl/books/search?q=$encodedQuery');
+        
+        // Use the new client directly instead of _getWithRetry
+        final response = await client.get(
+          uri,
+          headers: ApiService.defaultHeaders,
+        ).timeout(const Duration(seconds: 10));
+        
+        client.close(); // Close the client after use
+        
+        if (response.statusCode == 200) {
+          try {
+            final Map<String, dynamic> data = json.decode(response.body);
 
-        if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> booksJson = data['data'];
-          return booksJson.map((json) => Book.fromJson(json)).toList();
-        } else {
-          // If API doesn't support search or returns error, do client-side filtering
-          final booksList = await getBooks();
-          
-          // Filter the books that match the query
-          return booksList.where((book) {
-            final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
-            final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
-            return titleMatch || authorMatch;
-          }).toList();
+            if (data['success'] == true && data['data'] != null) {
+              final List<dynamic> booksJson = data['data'];
+              return booksJson.map((json) => Book.fromJson(json)).toList();
+            }
+          } catch (parseError) {
+            // Continue to fallback if parsing fails
+          }
         }
-      } catch (parseError) {
-        // Fallback to client-side search if API fails
+        
+        // If we reached here, either the API doesn't support search or returned an error
+        // Do client-side filtering instead
         final booksList = await getBooks();
         
         // Filter the books that match the query
@@ -361,6 +368,9 @@ class ApiService {
           final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
           return titleMatch || authorMatch;
         }).toList();
+      } finally {
+        // Ensure client is closed even if an exception occurs
+        client.close();
       }
     } catch (e) {
       throw Exception('Failed to search books: $e');
