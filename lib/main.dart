@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
+import 'package:flutterbookstore/views/screens/welcome_page.dart';
 import 'package:flutterbookstore/services/auth_service.dart';
 
 void main() async {
@@ -43,6 +44,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Check if user is authenticated
+    final bool isAuthenticated = AuthService().isAuthenticated;
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Flutter Book Store',
@@ -76,7 +80,7 @@ class MyApp extends StatelessWidget {
           secondary: AppColor.secondary,
         ),
       ),
-      home: const HomePage(),
+      home: isAuthenticated ? const HomePage() : const WelcomePage(),
     );
   }
 }
