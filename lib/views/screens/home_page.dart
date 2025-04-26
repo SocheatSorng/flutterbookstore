@@ -572,9 +572,12 @@ class _HomePageState extends State<HomePage> {
                           child: BookCard(
                             title: book.title,
                             author: book.author,
-                            coverImage: book.image ?? 'assets/images/book1.jpg',
+                            coverImage: book.image != null && book.image!.isNotEmpty 
+                              ? book.image! 
+                              : 'https://via.placeholder.com/150/0d5c46/ffffff?text=${Uri.encodeComponent(book.title)}',
                             price: book.price,
                             rating: 4.5, // Default rating
+                            bookData: book,
                           ),
                         );
                       },
@@ -593,10 +596,10 @@ class _HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: AppColor.primary,
         borderRadius: BorderRadius.circular(12),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/book_banner.jpg'),
+        image: DecorationImage(
+          image: NetworkImage('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000'),
           fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
+          colorFilter: const ColorFilter.mode(
             Color.fromRGBO(13, 92, 70, 0.8),
             BlendMode.srcOver,
           ),
@@ -698,8 +701,8 @@ class _HomePageState extends State<HomePage> {
                   backgroundColor: AppColor.accent,
                   child: CircleAvatar(
                     radius: 38,
-                    backgroundImage: const AssetImage(
-                      'assets/images/author.jpg',
+                    backgroundImage: NetworkImage(
+                      'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=1000',
                     ),
                     onBackgroundImageError: (_, __) {
                       // Handle error when image is not available

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
+import 'package:flutterbookstore/models/book.dart';
+import 'package:flutterbookstore/views/screens/book_detail_page.dart';
 
 class BookCard extends StatelessWidget {
   final String title;
@@ -7,6 +9,7 @@ class BookCard extends StatelessWidget {
   final String coverImage;
   final double price;
   final double rating;
+  final Book? bookData;
 
   const BookCard({
     Key? key,
@@ -15,120 +18,142 @@ class BookCard extends StatelessWidget {
     required this.coverImage,
     required this.price,
     required this.rating,
+    this.bookData,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      height: 280,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Book Cover
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
+    return GestureDetector(
+      onTap: () {
+        if (bookData != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetailPage(book: bookData!),
             ),
-            child: SizedBox(
-              height: 150,
-              width: 150,
-              child: _buildCoverImage(),
+          );
+        } else {
+          // Show a snackbar indicating the book details aren't available
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Book details not available'),
+              backgroundColor: AppColor.primary,
+              duration: Duration(seconds: 1),
             ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: AppColor.dark,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  // Author
-                  Text(
-                    author,
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontWeight: FontWeight.w400,
-                      fontSize: 10,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  // Rating
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.star,
-                        color: Colors.amber,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        rating.toString(),
-                        style: TextStyle(
-                          color: AppColor.dark,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Price and Buy Now Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Price
-                      Text(
-                        '\$${price.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          color: AppColor.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                      // Buy Now Icon Button
-                      InkWell(
-                        onTap: () {
-                          _showBuyNowDialog(context);
-                        },
-                        child: Icon(
-                          Icons.shopping_cart,
-                          color: AppColor.primary,
-                          size: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          );
+        }
+      },
+      child: Container(
+        width: 150,
+        height: 280,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Book Cover
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              child: SizedBox(
+                height: 150,
+                width: 150,
+                child: _buildCoverImage(),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Title
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: AppColor.dark,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    // Author
+                    Text(
+                      author,
+                      style: TextStyle(
+                        color: AppColor.grey,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 10,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    // Rating
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          rating.toString(),
+                          style: TextStyle(
+                            color: AppColor.dark,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    // Price and Buy Now Row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Price
+                        Text(
+                          '\$${price.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: AppColor.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                        // Buy Now Icon Button
+                        InkWell(
+                          onTap: () {
+                            _showBuyNowDialog(context);
+                          },
+                          child: Icon(
+                            Icons.shopping_cart,
+                            color: AppColor.primary,
+                            size: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
