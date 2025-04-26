@@ -6,6 +6,8 @@ import 'package:flutterbookstore/models/category.dart';
 import 'package:flutterbookstore/services/api_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/views/screens/api_test_page.dart';
+import 'package:flutterbookstore/views/screens/cart_page.dart';
+import 'package:flutterbookstore/views/screens/profile_page.dart';
 import 'package:flutterbookstore/views/widgets/book_card.dart';
 import 'package:flutterbookstore/views/widgets/category_card.dart';
 
@@ -55,6 +57,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _changeSelectedNavBar(int index) {
+    if (index == 3) {
+      // Navigate to profile page when Profile tab is selected
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
+      return;
+    }
+
     setState(() {
       _selectedNavbar = index;
     });
@@ -275,7 +286,12 @@ class _HomePageState extends State<HomePage> {
           icon: Icon(Icons.notifications_outlined, color: AppColor.dark),
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => CartPage()),
+            );
+          },
           icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark),
         ),
       ],
