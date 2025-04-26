@@ -22,14 +22,24 @@ class _HomePageState extends State<HomePage> {
   int _selectedNavbar = 0;
   final ApiService _apiService = ApiService();
   List<Book> _books = [];
+  List<Book> _filteredBooks = []; // For displaying search results
   bool _isLoading = true;
+  bool _isSearching = false; // Flag to track if search is in progress
   String _errorMessage = '';
+  String _searchQuery = ''; // Store the current search query
   List<BookCategory> _categories = [];
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -41,6 +51,7 @@ class _HomePageState extends State<HomePage> {
     try {
       // Fetch books from API
       _books = await _apiService.getBooks();
+      _filteredBooks = _books; // Initially, filtered books are the same as all books
 
       // Fetch categories from API
       _categories = await _apiService.getCategories();
@@ -53,6 +64,43 @@ class _HomePageState extends State<HomePage> {
         _isLoading = false;
         _errorMessage = e.toString();
       });
+    }
+  }
+
+  // Search books based on query
+  Future<void> _searchBooks(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _isSearching = false;
+        _filteredBooks = _books; // Reset to all books when query is empty
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _searchQuery = query;
+    });
+
+    try {
+      final results = await _apiService.searchBooks(query);
+      
+      setState(() {
+        _filteredBooks = results;
+        _isSearching = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isSearching = false;
+        _errorMessage = e.toString();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Search failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -421,13 +469,32 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
+                      controller: _searchController,
                       decoration: InputDecoration(
                         hintText: 'Search books, authors...',
                         hintStyle: TextStyle(color: AppColor.grey),
                         border: InputBorder.none,
                       ),
+                      onChanged: (value) {
+                        // Debounce search to avoid too many API calls
+                        Future.delayed(Duration(milliseconds: 500), () {
+                          if (value == _searchController.text) {
+                            _searchBooks(value);
+                          }
+                        });
+                      },
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: _searchBooks,
                     ),
                   ),
+                  if (_searchController.text.isNotEmpty)
+                    IconButton(
+                      icon: Icon(Icons.clear, color: AppColor.grey),
+                      onPressed: () {
+                        _searchController.clear();
+                        _searchBooks('');
+                      },
+                    ),
                 ],
               ),
             ),
@@ -438,25 +505,61 @@ class _HomePageState extends State<HomePage> {
           _buildBannerSection(),
           const SizedBox(height: 24),
 
-          // Categories Section from API
-          _buildCategoriesSection(),
-          const SizedBox(height: 24),
+          // If searching, show search results instead of regular sections
+          if (_isSearching) 
+            Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(color: AppColor.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Searching...',
+                    style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            )
+          else if (_searchQuery.isNotEmpty) ...[
+            _buildBooksSection('Search Results for "${_searchQuery}"', _filteredBooks),
+            if (_filteredBooks.isEmpty) 
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.search_off, size: 64, color: AppColor.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No books found for "${_searchQuery}"',
+                        style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
+          ] else ...[
+            // Categories Section from API
+            _buildCategoriesSection(),
+            const SizedBox(height: 24),
 
-          // Popular Books Section
-          _buildBooksSection('Popular Books', _books.take(5).toList()),
-          const SizedBox(height: 24),
+            // Popular Books Section
+            _buildBooksSection('Popular Books', _books.take(5).toList()),
+            const SizedBox(height: 24),
 
-          // New Releases Section
-          _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
-          const SizedBox(height: 24),
+            // New Releases Section
+            _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
+            const SizedBox(height: 24),
 
-          // Books From API
-          _buildBooksSection('All Books', _books),
-          const SizedBox(height: 24),
+            // Books From API
+            _buildBooksSection('All Books', _books),
+            const SizedBox(height: 24),
 
-          // Featured Author Section
-          _buildFeaturedAuthorSection(),
-          const SizedBox(height: 40),
+            // Featured Author Section
+            _buildFeaturedAuthorSection(),
+            const SizedBox(height: 40),
+          ],
         ],
       ),
     );
