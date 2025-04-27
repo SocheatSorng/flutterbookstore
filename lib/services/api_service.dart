@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutterbookstore/models/book.dart';
 import 'package:flutterbookstore/models/category.dart';
+import 'package:flutterbookstore/models/book_detail.dart';
 import 'package:flutterbookstore/config/app_config.dart';
 
 class ApiService {
@@ -411,6 +412,241 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Failed to load books for category: $e');
+    }
+  }
+
+  // Fetch book details
+  Future<BookDetail?> getBookDetails(int bookId) async {
+    try {
+      // Verify network connection first
+      bool isConnected = await isConnectedToNetwork();
+      if (!isConnected) {
+        throw Exception('No network connection available');
+      }
+
+      final response = await _getWithRetry('http://18.140.63.109/api/book-details/book/$bookId');
+
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+
+        if (data != null && data['data'] != null) {
+          final Map<String, dynamic> detailJson = data['data'];
+          return BookDetail.fromJson(detailJson);
+        } else {
+          throw Exception(
+            'Failed to load book details: ${data['message'] ?? 'Unknown error'}',
+          );
+        }
+      } catch (parseError) {
+        // If parsing fails, return null
+        print('Error parsing book details: $parseError');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching book details: $e');
+      throw Exception('Failed to load book details: $e');
+    }
+  }
+
+  // Add these methods to the ApiService class to implement sorting functionality
+
+  Future<List<Book>> getSortedBooks({
+    String sortBy = 'title',
+    String sortDirection = 'asc',
+    int? categoryId,
+    String? search,
+    double? minPrice,
+    double? maxPrice,
+  }) async {
+    try {
+      // Verify network connection first
+      bool isConnected = await isConnectedToNetwork();
+      if (!isConnected) {
+        throw Exception('No network connection available');
+      }
+
+      // Build URL with query parameters
+      String url = '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection';
+      
+      // Add optional parameters if provided
+      if (categoryId != null) {
+        url += '&category_id=$categoryId';
+      }
+      
+      if (search != null && search.isNotEmpty) {
+        url += '&search=${Uri.encodeComponent(search)}';
+      }
+      
+      // Add price range filters if provided
+      if (minPrice != null) {
+        url += '&min_price=$minPrice';
+      }
+      
+      if (maxPrice != null) {
+        url += '&max_price=$maxPrice';
+      }
+
+      final response = await _getWithRetry(url);
+
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> booksJson = data['data']['data']; // Access nested data
+          return booksJson.map((json) => Book.fromJson(json)).toList();
+        } else {
+          // Fallback: Try to parse as direct array
+          final List<dynamic> directData = json.decode(response.body);
+          if (directData is List) {
+            return directData.map((json) => Book.fromJson(json)).toList();
+          }
+          throw Exception(
+            'Failed to load sorted books: ${data['message'] ?? 'Unknown error'}',
+          );
+        }
+      } catch (parseError) {
+        // If parsing fails, fall back to client-side sorting and filtering
+        final allBooks = await getBooks();
+        
+        // Apply price filter
+        var filteredBooks = allBooks;
+        if (minPrice != null || maxPrice != null) {
+          filteredBooks = allBooks.where((book) {
+            bool matches = true;
+            if (minPrice != null) {
+              matches = matches && book.price >= minPrice;
+            }
+            if (maxPrice != null) {
+              matches = matches && book.price <= maxPrice;
+            }
+            return matches;
+          }).toList();
+        }
+        
+        // Sort books based on specified field and direction
+        return _sortBooksLocally(filteredBooks, sortBy, sortDirection);
+      }
+    } catch (e) {
+      throw Exception('Failed to load sorted books: $e');
+    }
+  }
+
+  // Method to get books by category with sorting
+  Future<List<Book>> getSortedBooksByCategory(
+    int categoryId, {
+    String sortBy = 'title',
+    String sortDirection = 'asc',
+    double? minPrice,
+    double? maxPrice,
+  }) async {
+    try {
+      // Verify network connection first
+      bool isConnected = await isConnectedToNetwork();
+      if (!isConnected) {
+        throw Exception('No network connection available');
+      }
+
+      // Try to get sorted books with category filter
+      String url = '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection&category_id=$categoryId';
+      
+      // Add price range filters if provided
+      if (minPrice != null) {
+        url += '&min_price=$minPrice';
+      }
+      
+      if (maxPrice != null) {
+        url += '&max_price=$maxPrice';
+      }
+      
+      final response = await _getWithRetry(url);
+
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> booksJson = data['data']['data']; // Access nested data
+          return booksJson.map((json) => Book.fromJson(json)).toList();
+        }
+      } catch (e) {
+        // Continue to fallback if parsing fails
+      }
+
+      // Fallback: Get books by category then sort and filter them locally
+      final books = await getBooksByCategory(categoryId);
+      
+      // Apply price filter
+      var filteredBooks = books;
+      if (minPrice != null || maxPrice != null) {
+        filteredBooks = books.where((book) {
+          bool matches = true;
+          if (minPrice != null) {
+            matches = matches && book.price >= minPrice;
+          }
+          if (maxPrice != null) {
+            matches = matches && book.price <= maxPrice;
+          }
+          return matches;
+        }).toList();
+      }
+      
+      return _sortBooksLocally(filteredBooks, sortBy, sortDirection);
+    } catch (e) {
+      throw Exception('Failed to load books for category: $e');
+    }
+  }
+
+  // Helper method for client-side sorting
+  List<Book> _sortBooksLocally(List<Book> books, String sortBy, String sortDirection) {
+    switch (sortBy) {
+      case 'title':
+        books.sort((a, b) => sortDirection == 'asc'
+            ? a.title.compareTo(b.title)
+            : b.title.compareTo(a.title));
+        break;
+      case 'author':
+        books.sort((a, b) => sortDirection == 'asc'
+            ? a.author.compareTo(b.author)
+            : b.author.compareTo(a.author));
+        break;
+      case 'price':
+        books.sort((a, b) => sortDirection == 'asc'
+            ? a.price.compareTo(b.price)
+            : b.price.compareTo(a.price));
+        break;
+      case 'date':
+        books.sort((a, b) => sortDirection == 'asc'
+            ? a.createdAt.compareTo(b.createdAt)
+            : b.createdAt.compareTo(a.createdAt));
+        break;
+      default:
+        // Default sort by title
+        books.sort((a, b) => a.title.compareTo(b.title));
+    }
+    return books;
+  }
+
+  // Get all available price ranges from the books
+  Future<Map<String, double>> getBookPriceRange() async {
+    try {
+      final books = await getBooks();
+      
+      if (books.isEmpty) {
+        return {'min': 0, 'max': 100}; // Default range if no books
+      }
+      
+      double minPrice = books.map((book) => book.price).reduce((a, b) => a < b ? a : b);
+      double maxPrice = books.map((book) => book.price).reduce((a, b) => a > b ? a : b);
+      
+      // Round min down and max up to nearest whole numbers
+      minPrice = (minPrice.floor()).toDouble();
+      maxPrice = (maxPrice.ceil()).toDouble();
+      
+      // Add small buffer to max
+      maxPrice = maxPrice + 10;
+      
+      return {'min': minPrice, 'max': maxPrice};
+    } catch (e) {
+      return {'min': 0, 'max': 100}; // Fallback range
     }
   }
 }

@@ -791,10 +791,17 @@ class _HomePageState extends State<HomePage> {
               ),
               TextButton(
                 onPressed: () {},
-                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColor.primary,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: AppColor.primary.withOpacity(0.3)),
+                  ),
+                ),
                 child: Text(
                   'See All',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
             ],
@@ -804,7 +811,7 @@ class _HomePageState extends State<HomePage> {
 
         // Category List from API
         SizedBox(
-          height: 105,
+          height: 115,
           child: Padding(
             padding: const EdgeInsets.only(left: 16),
             child:
@@ -854,11 +861,24 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
-                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
+                onPressed: () {
+                  // Navigate to All Books page when See All is tapped
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AllBooksPage()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColor.primary,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: AppColor.primary.withOpacity(0.3)),
+                  ),
+                ),
                 child: Text(
                   'See All',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
             ],
@@ -911,7 +931,14 @@ class _HomePageState extends State<HomePage> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: AppColor.primary,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColor.primary.withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
         image: DecorationImage(
           image: NetworkImage('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000'),
           fit: BoxFit.cover,
@@ -928,22 +955,22 @@ class _HomePageState extends State<HomePage> {
             left: 0,
             right: 0,
             child: Container(
-              height: 80,
+              height: 90,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
                 ),
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
                 ),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -954,29 +981,49 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        offset: Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Up to 50% off on selected books',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black.withOpacity(0.3),
+                        offset: Offset(0, 1),
+                        blurRadius: 2,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
                   height: 36,
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
                     onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.secondary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
+                    icon: Icon(Icons.local_offer, size: 16),
+                    label: Text(
                       'Shop Now',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColor.secondary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
@@ -1067,38 +1114,60 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBottomNavBar() {
-    return BottomNavigationBar(
-      items: [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            spreadRadius: 1,
+            blurRadius: 10,
+          ),
+        ],
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.book_outlined),
-          activeIcon: Icon(Icons.book),
-          label: 'Books',
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.bookmark_border_outlined),
-          activeIcon: Icon(Icons.bookmark),
-          label: 'Wishlist',
+        child: BottomNavigationBar(
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.book_outlined),
+              activeIcon: Icon(Icons.book),
+              label: 'Books',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.bookmark_border_outlined),
+              activeIcon: Icon(Icons.bookmark),
+              label: 'Wishlist',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedNavbar,
+          selectedItemColor: AppColor.primary,
+          unselectedItemColor: AppColor.grey,
+          showUnselectedLabels: true,
+          onTap: _changeSelectedNavBar,
+          type: BottomNavigationBarType.fixed,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
+          elevation: 0,
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-      currentIndex: _selectedNavbar,
-      selectedItemColor: AppColor.primary,
-      unselectedItemColor: AppColor.grey,
-      showUnselectedLabels: true,
-      onTap: _changeSelectedNavBar,
-      type: BottomNavigationBarType.fixed,
-      selectedFontSize: 12,
-      unselectedFontSize: 12,
-      elevation: 8,
+      ),
     );
   }
 

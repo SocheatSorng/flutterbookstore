@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
         elevation: 0,
         iconTheme: IconThemeData(color: AppColor.dark),
         title: Text(
-          'Sign In (Optional)',
+          'Sign In',
           style: TextStyle(color: AppColor.dark, fontWeight: FontWeight.w600),
         ),
       ),
@@ -49,44 +49,101 @@ class _LoginPageState extends State<LoginPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColor.lightGrey,
-                borderRadius: BorderRadius.circular(12),
+                color: Colors.blue.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.blue.withOpacity(0.1)),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: AppColor.primary),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.info_outline,
+                      color: Colors.blue[700],
+                      size: 20,
+                    ),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: Text(
-                      'You can continue shopping without an account. Creating an account helps you track orders and save favorites.',
-                      style: TextStyle(
-                        color: AppColor.dark,
-                        fontWeight: FontWeight.w400,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Login is Optional',
+                          style: TextStyle(
+                            color: Colors.blue[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'You can continue shopping without an account. Creating an account helps you track orders and save favorites.',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w400,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 30),
-            Text(
-              'Welcome Back 👋',
-              style: TextStyle(
-                color: AppColor.dark,
-                fontWeight: FontWeight.w700,
-                fontSize: 24,
+            
+            // Header Section
+            Container(
+              margin: EdgeInsets.symmetric(vertical: 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColor.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.login_rounded,
+                          color: AppColor.primary,
+                          size: 28,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Welcome Back 👋',
+                          style: TextStyle(
+                            color: AppColor.dark,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Login with the username/email and password created in your account',
+                    style: TextStyle(
+                      color: AppColor.grey,
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Login with the username/email and password created in your account',
-              style: TextStyle(
-                color: AppColor.grey,
-                fontWeight: FontWeight.w400,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 40),
+            
             // Email Field
             _buildTextField(
               controller: _emailController,
@@ -95,6 +152,7 @@ class _LoginPageState extends State<LoginPage> {
               prefixIcon: Icons.email_outlined,
             ),
             const SizedBox(height: 16),
+            
             // Password Field
             _buildTextField(
               controller: _passwordController,
@@ -102,368 +160,159 @@ class _LoginPageState extends State<LoginPage> {
               isPassword: true,
               prefixIcon: Icons.lock_outline,
             ),
-            const SizedBox(height: 8),
+            
             // Forgot Password
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () {},
-                style: TextButton.styleFrom(foregroundColor: AppColor.primary),
-                child: const Text(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColor.primary,
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                child: Text(
                   'Forgot Password?',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                    decorationColor: AppColor.primary.withOpacity(0.2),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            
+            const SizedBox(height: 32),
+            
             // Login Button
             SizedBox(
-              height: 50,
+              height: 55,
               child: ElevatedButton(
-                onPressed: () async {
-                  if (_emailController.text.isEmpty ||
-                      _passwordController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please enter both email and password'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Show loading indicator
-                  setState(() {
-                    _isLoading = true;
-                  });
-
-                  try {
-                    final success = await AuthService().login(
-                      _emailController.text,
-                      _passwordController.text,
-                    );
-
-                    if (success) {
-                      // Navigate to home page
-                      if (!mounted) return;
-
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const HomePage(),
-                        ),
-                      );
-                    } else {
-                      if (!mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Invalid email or password. Please try again.',
-                          ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (!mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Login error: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  } finally {
-                    if (mounted) {
-                      setState(() {
-                        _isLoading = false;
-                      });
-                    }
-                  }
-                },
+                onPressed: _isLoading ? null : _handleLogin,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColor.primary,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColor.primary.withOpacity(0.5),
+                  elevation: 2,
+                  shadowColor: AppColor.primary.withOpacity(0.4),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child:
-                    _isLoading
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                child: _isLoading
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           ),
-                        )
-                        : const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                          SizedBox(width: 12),
+                          Text(
+                            'Signing in...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
                           ),
+                        ],
+                      )
+                    : Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
                         ),
+                      ),
               ),
             ),
-            const SizedBox(height: 20),
-            // Continue as Guest Button
-            SizedBox(
-              height: 50,
+            
+            // Skip Button
+            Container(
+              margin: EdgeInsets.only(top: 16),
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.pop(context);
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColor.dark,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: AppColor.border),
-                  ),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text(
-                  'Continue as Guest',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                child: Text(
+                  'Skip and Continue Shopping',
+                  style: TextStyle(
+                    color: AppColor.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            
             // Or Divider
-            Row(
-              children: [
-                Expanded(child: Divider(color: AppColor.border, thickness: 1)),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'OR',
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontWeight: FontWeight.w600,
+            Container(
+              margin: EdgeInsets.symmetric(vertical: 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey.withOpacity(0.3),
+                      thickness: 1,
                     ),
                   ),
-                ),
-                Expanded(child: Divider(color: AppColor.border, thickness: 1)),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Debug button for testing API connectivity (remove in production)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: OutlinedButton(
-                onPressed: () async {
-                  try {
-                    setState(() {
-                      _isLoading = true;
-                    });
-
-                    // Test API connectivity
-                    final response = await http.get(
-                      Uri.parse('${AppConfig.apiBaseUrl}'),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                      },
-                    );
-
-                    String message = 'API Connection Test:\n';
-                    message += 'Status code: ${response.statusCode}\n';
-                    message += 'API URL: ${AppConfig.apiBaseUrl}\n';
-
-                    if (response.statusCode >= 200 &&
-                        response.statusCode < 400) {
-                      message += 'Connection successful!\n';
-                      try {
-                        final data = json.decode(response.body);
-                        if (data is Map) {
-                          message += 'API data: ${data.keys}\n';
-                        }
-                      } catch (e) {
-                        message += 'Could not parse response as JSON\n';
-                      }
-                    } else {
-                      message += 'Connection failed.\n';
-                    }
-
-                    // Try an OPTIONS request to check CORS configuration
-                    try {
-                      final optionsResponse = await http.get(
-                        Uri.parse('${AppConfig.apiBaseUrl}/login'),
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Accept': 'application/json',
-                        },
-                      );
-
-                      message += '\nOPTIONS check for login endpoint:\n';
-                      message += 'Status: ${optionsResponse.statusCode}\n';
-
-                      // Check if server provides CORS headers
-                      if (optionsResponse.headers.containsKey(
-                        'access-control-allow-origin',
-                      )) {
-                        message += 'CORS enabled: Yes\n';
-                        message +=
-                            'Allowed origins: ${optionsResponse.headers['access-control-allow-origin']}\n';
-                      } else {
-                        message += 'CORS headers not found\n';
-                      }
-                    } catch (e) {
-                      message += '\nOPTIONS request failed: $e';
-                    }
-
-                    message +=
-                        '\nResponse preview: ${response.body.length > 100 ? response.body.substring(0, 100) + '...' : response.body}';
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(message),
-                        duration: const Duration(seconds: 15),
-                        action: SnackBarAction(
-                          label: 'OK',
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          },
-                        ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        color: AppColor.grey,
+                        fontWeight: FontWeight.w600,
                       ),
-                    );
-
-                    // Additionally log to console for more detail
-                    print('====== API TEST DETAILS ======');
-                    print(message);
-                    print('Full response body: ${response.body}');
-                    print('Response headers: ${response.headers}');
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Connection error: $e'),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 10),
-                      ),
-                    );
-                  } finally {
-                    setState(() {
-                      _isLoading = false;
-                    });
-                  }
-                },
-                child: const Text('Test API Connection'),
+                    ),
+                  ),
+                  Expanded(
+                    child: Divider(
+                      color: Colors.grey.withOpacity(0.3),
+                      thickness: 1,
+                    ),
+                  ),
+                ],
               ),
             ),
-            // Debug button for testing credentials (remove in production)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: OutlinedButton(
-                onPressed: () async {
-                  try {
-                    if (_emailController.text.isEmpty ||
-                        _passwordController.text.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter credentials to test'),
-                          backgroundColor: Colors.red,
+            
+            // Register Option
+            Container(
+              margin: EdgeInsets.only(bottom: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Don\'t have an account?',
+                    style: TextStyle(
+                      color: AppColor.dark.withOpacity(0.7),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
                         ),
                       );
-                      return;
-                    }
-
-                    setState(() {
-                      _isLoading = true;
-                    });
-
-                    // Test the login API directly with raw http request
-                    final loginUrl = '${AppConfig.apiBaseUrl}/login';
-                    final response = await http.post(
-                      Uri.parse(loginUrl),
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                      },
-                      body: json.encode({
-                        'email': _emailController.text,
-                        'password': _passwordController.text,
-                      }),
-                    );
-
-                    String message = 'Direct Login Test:\n';
-                    message += 'Status code: ${response.statusCode}\n';
-                    message +=
-                        'Response: ${response.body.length > 200 ? response.body.substring(0, 200) + '...' : response.body}\n';
-
-                    // Also try form-encoded version
-                    final formResponse = await http.post(
-                      Uri.parse(loginUrl),
-                      headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Accept': 'application/json',
-                      },
-                      body:
-                          'email=${Uri.encodeComponent(_emailController.text)}&password=${Uri.encodeComponent(_passwordController.text)}',
-                    );
-
-                    message += '\nForm-encoded test:\n';
-                    message += 'Status code: ${formResponse.statusCode}\n';
-                    message +=
-                        'Response: ${formResponse.body.length > 200 ? formResponse.body.substring(0, 200) + '...' : formResponse.body}';
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(message),
-                        duration: const Duration(seconds: 15),
-                        action: SnackBarAction(
-                          label: 'OK',
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          },
-                        ),
+                    },
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
+                        color: AppColor.primary,
+                        fontWeight: FontWeight.bold,
                       ),
-                    );
-
-                    // Log to console
-                    print('====== DIRECT LOGIN TEST ======');
-                    print(message);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Test error: $e'),
-                        backgroundColor: Colors.red,
-                        duration: const Duration(seconds: 10),
-                      ),
-                    );
-                  } finally {
-                    setState(() {
-                      _isLoading = false;
-                    });
-                  }
-                },
-                child: const Text('Test Credentials'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            // Register Link
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Don\'t have an account?',
-                  style: TextStyle(color: AppColor.grey),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterPage(),
-                      ),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColor.primary,
-                  ),
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -471,27 +320,108 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Login handler function
+  Future<void> _handleLogin() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter both email and password'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Show loading indicator
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final success = await AuthService().login(
+        _emailController.text,
+        _passwordController.text,
+      );
+
+      if (success) {
+        // Navigate to home page
+        if (!mounted) return;
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Invalid email or password. Please try again.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String hintText,
-    bool isPassword = false,
     required IconData prefixIcon,
     TextInputType keyboardType = TextInputType.text,
+    bool isPassword = false,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword ? _obscureText : false,
-      keyboardType: keyboardType,
-      style: TextStyle(color: AppColor.dark),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColor.lightGrey,
-        hintText: hintText,
-        hintStyle: TextStyle(color: AppColor.grey),
-        prefixIcon: Icon(prefixIcon, color: AppColor.grey),
-        suffixIcon:
-            isPassword
-                ? IconButton(
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.2),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        obscureText: isPassword ? _obscureText : false,
+        style: TextStyle(
+          color: AppColor.dark,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 16,
+          ),
+          border: InputBorder.none,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppColor.grey.withOpacity(0.7),
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: Icon(
+            prefixIcon,
+            color: AppColor.grey,
+          ),
+          suffixIcon: isPassword
+              ? IconButton(
                   icon: Icon(
                     _obscureText ? Icons.visibility_off : Icons.visibility,
                     color: AppColor.grey,
@@ -502,12 +432,8 @@ class _LoginPageState extends State<LoginPage> {
                     });
                   },
                 )
-                : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+              : null,
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
       ),
     );
   }

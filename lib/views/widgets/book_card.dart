@@ -9,7 +9,7 @@ import 'package:flutterbookstore/views/screens/login_page.dart';
 class BookCard extends StatelessWidget {
   final String title;
   final String author;
-  final String coverImage;
+  final String? coverImage;
   final double price;
   final double rating;
   final Book? bookData;
@@ -18,7 +18,7 @@ class BookCard extends StatelessWidget {
     Key? key,
     required this.title,
     required this.author,
-    required this.coverImage,
+    this.coverImage,
     required this.price,
     required this.rating,
     this.bookData,
@@ -60,9 +60,9 @@ class BookCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 12,
+                    offset: Offset(0, 6),
                   ),
                 ],
               ),
@@ -70,75 +70,25 @@ class BookCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child:
-                        coverImage.startsWith('http') ||
-                                coverImage.startsWith('https')
-                            ? Image.network(
-                              coverImage,
+                    child: coverImage == null
+                      ? _buildPlaceholderCover()
+                      : (coverImage?.startsWith('http') == true || coverImage?.startsWith('https') == true)
+                          ? Image.network(
+                              coverImage!,
                               width: 150,
                               height: 200,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 150,
-                                  height: 200,
-                                  color: AppColor.primary.withOpacity(0.1),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.book,
-                                        size: 40,
-                                        color: AppColor.primary,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        title,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColor.dark,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                return _buildPlaceholderCover();
                               },
                             )
-                            : Image.asset(
-                              coverImage,
+                          : Image.asset(
+                              coverImage!,
                               width: 150,
                               height: 200,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 150,
-                                  height: 200,
-                                  color: AppColor.primary.withOpacity(0.1),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.book,
-                                        size: 40,
-                                        color: AppColor.primary,
-                                      ),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        title,
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColor.dark,
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                return _buildPlaceholderCover();
                               },
                             ),
                   ),
@@ -154,7 +104,7 @@ class BookCard extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             // Title
             Expanded(
               child: Text(
@@ -163,20 +113,25 @@ class BookCard extends StatelessWidget {
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColor.dark,
+                  height: 1.2,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            SizedBox(height: 2),
+            SizedBox(height: 4),
             // Author
             Text(
               'by $author',
-              style: TextStyle(fontSize: 12, color: AppColor.grey),
+              style: TextStyle(
+                fontSize: 12, 
+                color: AppColor.grey,
+                fontStyle: FontStyle.italic,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 8),
             // Price and Rating
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -191,24 +146,75 @@ class BookCard extends StatelessWidget {
                   ),
                 ),
                 // Rating
-                Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber, size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      rating.toString(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColor.dark,
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber.withOpacity(0.5), width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 12),
+                      SizedBox(width: 2),
+                      Text(
+                        rating.toString(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.amber.shade800,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderCover() {
+    return Container(
+      width: 150,
+      height: 200,
+      decoration: BoxDecoration(
+        color: AppColor.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColor.primary.withOpacity(0.1),
+            AppColor.primary.withOpacity(0.2),
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.book,
+            size: 40,
+            color: AppColor.primary,
+          ),
+          SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColor.dark,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -316,38 +322,40 @@ class _AddToCartButtonState extends State<AddToCartButton> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColor.primary,
-        borderRadius: BorderRadius.circular(8),
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 6,
             offset: Offset(0, 2),
           ),
         ],
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColor.secondary,
+        shape: CircleBorder(),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
-          borderRadius: BorderRadius.circular(8),
           onTap: _isLoading ? null : _addToCart,
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child:
-                _isLoading
-                    ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                    : Icon(
-                      Icons.add_shopping_cart,
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+            ),
+            child: _isLoading
+                ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
                       color: Colors.white,
-                      size: 20,
+                      strokeWidth: 2,
                     ),
+                  )
+                : Icon(
+                    Icons.add_shopping_cart,
+                    color: Colors.white,
+                    size: 16,
+                  ),
           ),
         ),
       ),

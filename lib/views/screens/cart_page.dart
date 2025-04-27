@@ -198,36 +198,106 @@ class _CartPageState extends State<CartPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.shopping_cart_outlined,
-                      size: 80,
-                      color: AppColor.grey,
+                    // Empty cart illustration
+                    Container(
+                      width: 200,
+                      height: 200,
+                      margin: EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: AppColor.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.shopping_cart_outlined,
+                            size: 80,
+                            color: AppColor.primary.withOpacity(0.7),
+                          ),
+                          Positioned(
+                            top: 60,
+                            right: 60,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              padding: EdgeInsets.all(8),
+                              child: Icon(
+                                Icons.sentiment_dissatisfied,
+                                color: Colors.orange,
+                                size: 32,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 16),
                     Text(
-                      'Your cart is empty',
+                      'Your Cart is Empty',
                       style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
                         color: AppColor.dark,
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Browse books and add them to your cart',
-                      style: TextStyle(fontSize: 14, color: AppColor.grey),
+                    SizedBox(height: 12),
+                    Container(
+                      width: 250,
+                      child: Text(
+                        'Looks like you haven\'t added any books to your cart yet.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColor.grey,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
-                    SizedBox(height: 24),
-                    ElevatedButton(
+                    SizedBox(height: 32),
+                    Container(
+                      width: 200,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        icon: Icon(Icons.shopping_bag, color: Colors.white),
+                        label: Text(
+                          'Start Shopping',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColor.primary,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+                    TextButton.icon(
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        _loadCartItems();
                       },
-                      child: Text('Browse Books'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColor.primary,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
+                      icon: Icon(Icons.refresh, size: 16, color: AppColor.primary),
+                      label: Text(
+                        'Refresh Cart',
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
