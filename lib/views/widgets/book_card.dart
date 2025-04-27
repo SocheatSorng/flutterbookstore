@@ -48,13 +48,14 @@ class BookCard extends StatelessWidget {
       },
       child: Container(
         width: 150,
+        height: 290,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Book Cover
             Container(
               width: 150,
-              height: 200,
+              height: 180,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -153,19 +154,21 @@ class BookCard extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 12),
+            SizedBox(height: 8),
             // Title
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColor.dark,
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColor.dark,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 4),
+            SizedBox(height: 2),
             // Author
             Text(
               'by $author',
@@ -173,7 +176,7 @@ class BookCard extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 4),
             // Price and Rating
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

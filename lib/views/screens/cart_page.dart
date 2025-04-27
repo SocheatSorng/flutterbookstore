@@ -4,7 +4,7 @@ import '../../constant/app_color.dart';
 import '../../models/cart.dart';
 import '../../services/cart_service.dart';
 import '../../services/auth_service.dart';
-import 'order_success_page.dart';
+import 'checkout_page.dart';
 import '../widgets/cart_tile.dart';
 import 'login_page.dart';
 
@@ -163,11 +163,11 @@ class _CartPageState extends State<CartPage> {
               cartData.isEmpty
                   ? null
                   : () {
-                    // TODO: Implement checkout logic
+                    // Navigate to checkout page
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OrderSuccessPage(),
+                        builder: (context) => CheckoutPage(),
                       ),
                     );
                   },

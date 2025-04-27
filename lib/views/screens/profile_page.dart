@@ -3,8 +3,11 @@ import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/services/auth_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/views/screens/edit_profile_page.dart';
+import 'package:flutterbookstore/views/screens/cart_page.dart';
+import 'package:flutterbookstore/views/screens/order_history_page.dart';
 import 'package:flutterbookstore/views/widgets/main_app_bar_widget.dart';
 import 'package:flutterbookstore/views/widgets/menu_tile_widget.dart';
+import 'package:flutterbookstore/services/cart_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -17,11 +20,13 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isAuthenticated = false;
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
+  int _cartItemCount = 0;
 
   @override
   void initState() {
     super.initState();
     _checkAuthentication();
+    _loadCartItems();
   }
 
   Future<void> _checkAuthentication() async {
@@ -74,18 +79,27 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _loadCartItems() async {
+    if (mounted) {
+      await CartService.fetchCartItems();
+      setState(() {
+        _cartItemCount = CartService.itemCount;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: const MainAppBar(cartValue: 0, chatValue: 0),
+        appBar: const MainAppBar(cartValue: 0),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!_isAuthenticated) {
       return Scaffold(
-        appBar: const MainAppBar(cartValue: 0, chatValue: 0),
+        appBar: const MainAppBar(cartValue: 0),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -137,7 +151,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // User is authenticated, show profile
     return Scaffold(
-      appBar: const MainAppBar(cartValue: 2, chatValue: 2),
+      appBar: MainAppBar(cartValue: _cartItemCount),
       body: ListView(
         shrinkWrap: true,
         physics: const BouncingScrollPhysics(),
@@ -256,61 +270,90 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  margin: const EdgeInsets.only(left: 16),
-                  child: Text(
-                    'ACCOUNT',
-                    style: TextStyle(
-                      color: AppColor.secondary.withOpacity(0.5),
-                      letterSpacing: 6 / 100,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        spreadRadius: 0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ),
-                MenuTileWidget(
-                  onTap: () {},
-                  margin: const EdgeInsets.only(top: 10),
-                  icon: Icon(
-                    Icons.history,
-                    color: AppColor.secondary.withOpacity(0.5),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'ACCOUNT',
+                        style: TextStyle(
+                          color: AppColor.secondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      MenuTileWidget(
+                        title: 'Last Seen',
+                        icon: Icon(Icons.history),
+                        subtitle: 'View recently visited books',
+                        onTap: () {
+                          // Handle Last Seen action
+                        },
+                      ),
+                      MenuTileWidget(
+                        title: 'Wishlist',
+                        icon: Icon(Icons.favorite_border),
+                        subtitle: 'Your favorite books',
+                        onTap: () {
+                          // Handle Wishlist action
+                        },
+                      ),
+                      MenuTileWidget(
+                        title: 'Cart',
+                        icon: Icon(Icons.shopping_cart_outlined),
+                        subtitle: 'Your shopping cart',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => CartPage()),
+                          ).then((_) {
+                            // Refresh cart count when returning from cart page
+                            _loadCartItems();
+                          });
+                        },
+                      ),
+                      MenuTileWidget(
+                        title: 'Orders',
+                        icon: Icon(Icons.shopping_bag_outlined),
+                        subtitle: 'View your order history',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => OrderHistoryPage()),
+                          );
+                        },
+                      ),
+                      MenuTileWidget(
+                        title: 'Wallet',
+                        icon: Icon(Icons.account_balance_wallet_outlined),
+                        subtitle: 'Payment methods',
+                        onTap: () {
+                          // Handle Wallet action
+                        },
+                      ),
+                      MenuTileWidget(
+                        title: 'Addresses',
+                        icon: Icon(Icons.location_on_outlined),
+                        subtitle: 'Manage delivery addresses',
+                        onTap: () {
+                          // Handle Addresses action
+                        },
+                      ),
+                    ],
                   ),
-                  title: 'Last Seen',
-                  subtitle: 'Books you viewed recently',
-                ),
-                MenuTileWidget(
-                  onTap: () {},
-                  icon: Icon(
-                    Icons.favorite_border,
-                    color: AppColor.secondary.withOpacity(0.5),
-                  ),
-                  title: 'Wishlist',
-                  subtitle: 'Books you saved to buy later',
-                ),
-                MenuTileWidget(
-                  onTap: () {},
-                  icon: Icon(
-                    Icons.shopping_bag_outlined,
-                    color: AppColor.secondary.withOpacity(0.5),
-                  ),
-                  title: 'Orders',
-                  subtitle: 'Your order history and status',
-                ),
-                MenuTileWidget(
-                  onTap: () {},
-                  icon: Icon(
-                    Icons.account_balance_wallet_outlined,
-                    color: AppColor.secondary.withOpacity(0.5),
-                  ),
-                  title: 'Wallet',
-                  subtitle: 'Your wallet balance and transactions',
-                ),
-                MenuTileWidget(
-                  onTap: () {},
-                  icon: Icon(
-                    Icons.location_on_outlined,
-                    color: AppColor.secondary.withOpacity(0.5),
-                  ),
-                  title: 'Addresses',
-                  subtitle: 'Your shipping and billing addresses',
                 ),
               ],
             ),

@@ -376,4 +376,41 @@ class ApiService {
       throw Exception('Failed to search books: $e');
     }
   }
+
+  // Fetch books by category
+  Future<List<Book>> getBooksByCategory(int categoryId) async {
+    try {
+      // Verify network connection first
+      bool isConnected = await isConnectedToNetwork();
+      if (!isConnected) {
+        throw Exception('No network connection available');
+      }
+
+      final response = await _getWithRetry('$baseUrl/categories/$categoryId/books');
+
+      try {
+        final Map<String, dynamic> data = json.decode(response.body);
+
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> booksJson = data['data'];
+          return booksJson.map((json) => Book.fromJson(json)).toList();
+        } else {
+          // Fallback: Try to parse as direct array
+          final List<dynamic> directData = json.decode(response.body);
+          if (directData is List) {
+            return directData.map((json) => Book.fromJson(json)).toList();
+          }
+          throw Exception(
+            'Failed to load books for category: ${data['message'] ?? 'Unknown error'}',
+          );
+        }
+      } catch (parseError) {
+        // If parsing fails, get all books and filter by category
+        final allBooks = await getBooks();
+        return allBooks.where((book) => book.categoryID == categoryId).toList();
+      }
+    } catch (e) {
+      throw Exception('Failed to load books for category: $e');
+    }
+  }
 }

@@ -4,10 +4,12 @@ import 'package:flutterbookstore/constant/app_color.dart';
 import 'package:flutterbookstore/models/book.dart';
 import 'package:flutterbookstore/models/category.dart';
 import 'package:flutterbookstore/services/api_service.dart';
+import 'package:flutterbookstore/services/cart_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/views/screens/api_test_page.dart';
 import 'package:flutterbookstore/views/screens/cart_page.dart';
 import 'package:flutterbookstore/views/screens/profile_page.dart';
+import 'package:flutterbookstore/views/screens/all_books_page.dart';
 import 'package:flutterbookstore/views/widgets/book_card.dart';
 import 'package:flutterbookstore/views/widgets/category_card.dart';
 
@@ -29,11 +31,16 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = ''; // Store the current search query
   List<BookCategory> _categories = [];
   final TextEditingController _searchController = TextEditingController();
+  
+  // Add state for category filtering
+  BookCategory? _selectedCategory;
+  bool _isLoadingCategory = false;
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    _loadCartData(); // Load cart data when homepage initializes
   }
 
   @override
@@ -67,12 +74,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Load cart data to display the badge
+  Future<void> _loadCartData() async {
+    try {
+      await CartService.fetchCartItems();
+      setState(() {
+        // Just refresh the state to update the badge
+      });
+    } catch (e) {
+      print('Error loading cart data: $e');
+    }
+  }
+
   // Search books based on query
   Future<void> _searchBooks(String query) async {
     if (query.isEmpty) {
       setState(() {
         _isSearching = false;
         _filteredBooks = _books; // Reset to all books when query is empty
+        _searchQuery = ''; // Clear the search query when empty
         _errorMessage = '';
       });
       return;
@@ -120,7 +140,62 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Add a new method to fetch books by category
+  Future<void> _fetchBooksByCategory(BookCategory category) async {
+    setState(() {
+      _isLoadingCategory = true;
+      _errorMessage = '';
+      _selectedCategory = category;
+    });
+
+    try {
+      final books = await _apiService.getBooksByCategory(category.categoryID);
+      
+      setState(() {
+        _filteredBooks = books;
+        _isLoadingCategory = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCategory = false;
+        _errorMessage = 'Failed to load books for category: ${e.toString()}';
+        // Try to filter books locally if API fails
+        _filteredBooks = _books.where((book) => book.categoryID == category.categoryID).toList();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading books for ${category.name}'),
+          backgroundColor: Colors.red,
+          action: SnackBarAction(
+            label: 'RETRY',
+            textColor: Colors.white,
+            onPressed: () => _fetchBooksByCategory(category),
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  // Add a method to clear category filtering
+  void _clearCategoryFilter() {
+    setState(() {
+      _selectedCategory = null;
+      _filteredBooks = _books;
+    });
+  }
+
   void _changeSelectedNavBar(int index) {
+    if (index == 1) {
+      // Navigate to All Books page when Books tab is selected
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AllBooksPage()),
+      );
+      return;
+    }
+    
     if (index == 3) {
       // Navigate to profile page when Profile tab is selected
       Navigator.push(
@@ -307,26 +382,52 @@ class _HomePageState extends State<HomePage> {
     return AppBar(
       backgroundColor: Colors.white,
       elevation: 0,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Hello, Book Lover!',
-            style: TextStyle(
-              color: AppColor.dark,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
+      title: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColor.lightGrey,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Icon(Icons.search, color: AppColor.grey, size: 20),
             ),
-          ),
-          Text(
-            'Find your next book',
-            style: TextStyle(
-              color: AppColor.dark,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search books, authors...',
+                  hintStyle: TextStyle(color: AppColor.grey, fontSize: 14),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(bottom: 12),
+                ),
+                onChanged: (value) {
+                  // Debounce search to avoid too many API calls
+                  Future.delayed(Duration(milliseconds: 500), () {
+                    if (value == _searchController.text) {
+                      _searchBooks(value);
+                    }
+                  });
+                },
+                textInputAction: TextInputAction.search,
+                onSubmitted: _searchBooks,
+              ),
             ),
-          ),
-        ],
+            if (_searchController.text.isNotEmpty)
+              IconButton(
+                icon: Icon(Icons.clear, color: AppColor.grey, size: 18),
+                constraints: BoxConstraints(maxWidth: 30),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  _searchController.clear();
+                  _searchBooks('');
+                },
+              ),
+          ],
+        ),
       ),
       actions: [
         IconButton(
@@ -349,14 +450,47 @@ class _HomePageState extends State<HomePage> {
           onPressed: () {},
           icon: Icon(Icons.notifications_outlined, color: AppColor.dark),
         ),
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => CartPage()),
-            );
-          },
-          icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark),
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CartPage()),
+                ).then((_) {
+                  // Refresh the cart count when returning from CartPage
+                  setState(() {});
+                });
+              },
+              icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark),
+            ),
+            if (CartService.itemCount > 0)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppColor.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    '${CartService.itemCount}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -444,53 +578,6 @@ class _HomePageState extends State<HomePage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Top Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColor.lightGrey,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.search, color: AppColor.grey),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search books, authors...',
-                        hintStyle: TextStyle(color: AppColor.grey),
-                        border: InputBorder.none,
-                      ),
-                      onChanged: (value) {
-                        // Debounce search to avoid too many API calls
-                        Future.delayed(Duration(milliseconds: 500), () {
-                          if (value == _searchController.text) {
-                            _searchBooks(value);
-                          }
-                        });
-                      },
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: _searchBooks,
-                    ),
-                  ),
-                  if (_searchController.text.isNotEmpty)
-                    IconButton(
-                      icon: Icon(Icons.clear, color: AppColor.grey),
-                      onPressed: () {
-                        _searchController.clear();
-                        _searchBooks('');
-                      },
-                    ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          
           // Error message display
           if (_errorMessage.isNotEmpty)
             Padding(
@@ -562,18 +649,61 @@ class _HomePageState extends State<HomePage> {
           _buildBannerSection(),
           const SizedBox(height: 24),
 
+          // If a category is selected, show a banner for it
+          if (_selectedCategory != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColor.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColor.primary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.category,
+                      color: AppColor.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Showing books in "${_selectedCategory!.name}" category',
+                        style: TextStyle(
+                          color: AppColor.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: AppColor.primary),
+                      onPressed: _clearCategoryFilter,
+                      tooltip: 'Clear filter',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (_selectedCategory != null) const SizedBox(height: 16),
+          
           // If searching, show search results instead of regular sections
-          if (_isSearching) 
+          if (_isSearching || _isLoadingCategory) 
             Center(
-              child: Column(
-                children: [
-                  CircularProgressIndicator(color: AppColor.primary),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Searching...',
-                    style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Column(
+                  children: [
+                    CircularProgressIndicator(color: AppColor.primary),
+                    const SizedBox(height: 16),
+                    Text(
+                      _isSearching 
+                        ? 'Searching...' 
+                        : 'Loading books for ${_selectedCategory!.name}...',
+                      style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ),
             )
           else if (_searchQuery.isNotEmpty) ...[
@@ -596,26 +726,47 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             const SizedBox(height: 24),
+          ] else if (_selectedCategory != null) ...[
+            // Show books for selected category
+            _buildBooksSection('Books in ${_selectedCategory!.name}', _filteredBooks),
+            if (_filteredBooks.isEmpty) 
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      Icon(Icons.book_outlined, size: 64, color: AppColor.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No books found in ${_selectedCategory!.name} category',
+                        style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 24),
           ] else ...[
-          // Categories Section from API
-          _buildCategoriesSection(),
-          const SizedBox(height: 24),
+            // Categories Section from API
+            _buildCategoriesSection(),
+            const SizedBox(height: 24),
 
-          // Popular Books Section
-          _buildBooksSection('Popular Books', _books.take(5).toList()),
-          const SizedBox(height: 24),
+            // Popular Books Section
+            _buildBooksSection('Popular Books', _books.take(5).toList()),
+            const SizedBox(height: 24),
 
-          // New Releases Section
-          _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
-          const SizedBox(height: 24),
+            // New Releases Section
+            _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
+            const SizedBox(height: 24),
 
-          // Books From API
-          _buildBooksSection('All Books', _books),
-          const SizedBox(height: 24),
+            // Books From API
+            _buildBooksSection('All Books', _books),
+            const SizedBox(height: 24),
 
-          // Featured Author Section
-          _buildFeaturedAuthorSection(),
-          const SizedBox(height: 40),
+            // Featured Author Section
+            _buildFeaturedAuthorSection(),
+            const SizedBox(height: 40),
           ],
         ],
       ),
@@ -671,7 +822,12 @@ class _HomePageState extends State<HomePage> {
                         final category = _categories[index];
                         return Padding(
                           padding: EdgeInsets.only(right: 16),
-                          child: CategoryCard(categoryName: category.name),
+                          child: CategoryCard(
+                            categoryName: category.name,
+                            categoryId: category.categoryID,
+                            isSelected: _selectedCategory?.categoryID == category.categoryID,
+                            onTap: () => _fetchBooksByCategory(category),
+                          ),
                         );
                       },
                     ),
@@ -919,9 +1075,9 @@ class _HomePageState extends State<HomePage> {
           label: 'Home',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.explore_outlined),
-          activeIcon: Icon(Icons.explore),
-          label: 'Explore',
+          icon: Icon(Icons.book_outlined),
+          activeIcon: Icon(Icons.book),
+          label: 'Books',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.bookmark_border_outlined),
