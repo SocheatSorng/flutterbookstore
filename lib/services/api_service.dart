@@ -26,7 +26,7 @@ class ApiService {
       if (kIsWeb) {
         return true; // Assume connected when running in a browser
       }
-      
+
       final List<InternetAddress> result = await InternetAddress.lookup(
         'google.com',
       );
@@ -127,43 +127,6 @@ class ApiService {
     }
   }
 
-  // Diagnostic function to check server connection
-  Future<Map<String, dynamic>> checkServerConnection() async {
-    final result = {
-      'isConnected': false,
-      'statusCode': null,
-      'responseTime': 0,
-      'error': null,
-    };
-
-    // First check if we're connected to a network
-    bool networkConnected = await isConnectedToNetwork();
-    if (!networkConnected) {
-      result['error'] = 'Device not connected to any network';
-      return result;
-    }
-
-    final stopwatch = Stopwatch()..start();
-    final client = createClient();
-
-    try {
-      final response = await client
-          .get(Uri.parse(baseUrl), headers: defaultHeaders)
-          .timeout(Duration(seconds: 5)); // Short timeout for quick check
-
-      result['isConnected'] = response.statusCode == 200;
-      result['statusCode'] = response.statusCode;
-      result['responseTime'] = stopwatch.elapsedMilliseconds;
-    } catch (e) {
-      result['error'] = e.toString();
-    } finally {
-      stopwatch.stop();
-      client.close();
-    }
-
-    return result;
-  }
-
   // Fetch all books
   Future<List<Book>> getBooks() async {
     try {
@@ -176,19 +139,19 @@ class ApiService {
       final response = await _getWithRetry('$baseUrl/books');
 
       try {
-      final Map<String, dynamic> data = json.decode(response.body);
+        final Map<String, dynamic> data = json.decode(response.body);
 
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> booksJson = data['data'];
-        return booksJson.map((json) => Book.fromJson(json)).toList();
-      } else {
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> booksJson = data['data'];
+          return booksJson.map((json) => Book.fromJson(json)).toList();
+        } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
           if (directData is List) {
             return directData.map((json) => Book.fromJson(json)).toList();
           }
-        throw Exception(
-          'Failed to load books: ${data['message'] ?? 'Unknown error'}',
+          throw Exception(
+            'Failed to load books: ${data['message'] ?? 'Unknown error'}',
           );
         }
       } catch (parseError) {
@@ -202,9 +165,12 @@ class ApiService {
             author: 'Author ${index % 4 + 1}',
             price: ((index + 1) * 9.99),
             stockQuantity: 100,
-            image: 'https://via.placeholder.com/150?text=Book${index+1}',
+            image: 'https://via.placeholder.com/150?text=Book${index + 1}',
             createdAt: DateTime.now().toString(),
-            category: {'CategoryID': (index % 5) + 1, 'Name': 'Category ${(index % 5) + 1}'},
+            category: {
+              'CategoryID': (index % 5) + 1,
+              'Name': 'Category ${(index % 5) + 1}',
+            },
           ),
         );
       }
@@ -225,22 +191,24 @@ class ApiService {
       final response = await _getWithRetry('$baseUrl/categories');
 
       try {
-      final Map<String, dynamic> data = json.decode(response.body);
+        final Map<String, dynamic> data = json.decode(response.body);
 
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> categoriesJson = data['data'];
-        return categoriesJson
-            .map((json) => BookCategory.fromJson(json))
-            .toList();
-      } else {
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> categoriesJson = data['data'];
+          return categoriesJson
+              .map((json) => BookCategory.fromJson(json))
+              .toList();
+        } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
           if (directData is List) {
-            return directData.map((json) => BookCategory.fromJson(json)).toList();
+            return directData
+                .map((json) => BookCategory.fromJson(json))
+                .toList();
           }
-        throw Exception(
-          'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
-        );
+          throw Exception(
+            'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
+          );
         }
       } catch (parseError) {
         // If parsing fails, create mock data for testing
@@ -337,15 +305,14 @@ class ApiService {
         // Encode the query for URL
         final encodedQuery = Uri.encodeComponent(query);
         final uri = Uri.parse('$baseUrl/books/search?q=$encodedQuery');
-        
+
         // Use the new client directly instead of _getWithRetry
-        final response = await client.get(
-          uri,
-          headers: ApiService.defaultHeaders,
-        ).timeout(const Duration(seconds: 10));
-        
+        final response = await client
+            .get(uri, headers: ApiService.defaultHeaders)
+            .timeout(const Duration(seconds: 10));
+
         client.close(); // Close the client after use
-        
+
         if (response.statusCode == 200) {
           try {
             final Map<String, dynamic> data = json.decode(response.body);
@@ -358,15 +325,19 @@ class ApiService {
             // Continue to fallback if parsing fails
           }
         }
-        
+
         // If we reached here, either the API doesn't support search or returned an error
         // Do client-side filtering instead
         final booksList = await getBooks();
-        
+
         // Filter the books that match the query
         return booksList.where((book) {
-          final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
-          final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
+          final titleMatch = book.title.toLowerCase().contains(
+            query.toLowerCase(),
+          );
+          final authorMatch = book.author.toLowerCase().contains(
+            query.toLowerCase(),
+          );
           return titleMatch || authorMatch;
         }).toList();
       } finally {
@@ -387,7 +358,9 @@ class ApiService {
         throw Exception('No network connection available');
       }
 
-      final response = await _getWithRetry('$baseUrl/categories/$categoryId/books');
+      final response = await _getWithRetry(
+        '$baseUrl/categories/$categoryId/books',
+      );
 
       try {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -424,7 +397,9 @@ class ApiService {
         throw Exception('No network connection available');
       }
 
-      final response = await _getWithRetry('http://18.140.63.109/api/book-details/book/$bookId');
+      final response = await _getWithRetry(
+        'http://18.140.63.109/api/book-details/book/$bookId',
+      );
 
       try {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -466,22 +441,23 @@ class ApiService {
       }
 
       // Build URL with query parameters
-      String url = '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection';
-      
+      String url =
+          '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection';
+
       // Add optional parameters if provided
       if (categoryId != null) {
         url += '&category_id=$categoryId';
       }
-      
+
       if (search != null && search.isNotEmpty) {
         url += '&search=${Uri.encodeComponent(search)}';
       }
-      
+
       // Add price range filters if provided
       if (minPrice != null) {
         url += '&min_price=$minPrice';
       }
-      
+
       if (maxPrice != null) {
         url += '&max_price=$maxPrice';
       }
@@ -492,7 +468,8 @@ class ApiService {
         final Map<String, dynamic> data = json.decode(response.body);
 
         if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> booksJson = data['data']['data']; // Access nested data
+          final List<dynamic> booksJson =
+              data['data']['data']; // Access nested data
           return booksJson.map((json) => Book.fromJson(json)).toList();
         } else {
           // Fallback: Try to parse as direct array
@@ -507,22 +484,23 @@ class ApiService {
       } catch (parseError) {
         // If parsing fails, fall back to client-side sorting and filtering
         final allBooks = await getBooks();
-        
+
         // Apply price filter
         var filteredBooks = allBooks;
         if (minPrice != null || maxPrice != null) {
-          filteredBooks = allBooks.where((book) {
-            bool matches = true;
-            if (minPrice != null) {
-              matches = matches && book.price >= minPrice;
-            }
-            if (maxPrice != null) {
-              matches = matches && book.price <= maxPrice;
-            }
-            return matches;
-          }).toList();
+          filteredBooks =
+              allBooks.where((book) {
+                bool matches = true;
+                if (minPrice != null) {
+                  matches = matches && book.price >= minPrice;
+                }
+                if (maxPrice != null) {
+                  matches = matches && book.price <= maxPrice;
+                }
+                return matches;
+              }).toList();
         }
-        
+
         // Sort books based on specified field and direction
         return _sortBooksLocally(filteredBooks, sortBy, sortDirection);
       }
@@ -547,24 +525,26 @@ class ApiService {
       }
 
       // Try to get sorted books with category filter
-      String url = '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection&category_id=$categoryId';
-      
+      String url =
+          '$baseUrl/books/sort?sort_by=$sortBy&sort_direction=$sortDirection&category_id=$categoryId';
+
       // Add price range filters if provided
       if (minPrice != null) {
         url += '&min_price=$minPrice';
       }
-      
+
       if (maxPrice != null) {
         url += '&max_price=$maxPrice';
       }
-      
+
       final response = await _getWithRetry(url);
 
       try {
         final Map<String, dynamic> data = json.decode(response.body);
 
         if (data['success'] == true && data['data'] != null) {
-          final List<dynamic> booksJson = data['data']['data']; // Access nested data
+          final List<dynamic> booksJson =
+              data['data']['data']; // Access nested data
           return booksJson.map((json) => Book.fromJson(json)).toList();
         }
       } catch (e) {
@@ -573,22 +553,23 @@ class ApiService {
 
       // Fallback: Get books by category then sort and filter them locally
       final books = await getBooksByCategory(categoryId);
-      
+
       // Apply price filter
       var filteredBooks = books;
       if (minPrice != null || maxPrice != null) {
-        filteredBooks = books.where((book) {
-          bool matches = true;
-          if (minPrice != null) {
-            matches = matches && book.price >= minPrice;
-          }
-          if (maxPrice != null) {
-            matches = matches && book.price <= maxPrice;
-          }
-          return matches;
-        }).toList();
+        filteredBooks =
+            books.where((book) {
+              bool matches = true;
+              if (minPrice != null) {
+                matches = matches && book.price >= minPrice;
+              }
+              if (maxPrice != null) {
+                matches = matches && book.price <= maxPrice;
+              }
+              return matches;
+            }).toList();
       }
-      
+
       return _sortBooksLocally(filteredBooks, sortBy, sortDirection);
     } catch (e) {
       throw Exception('Failed to load books for category: $e');
@@ -596,27 +577,43 @@ class ApiService {
   }
 
   // Helper method for client-side sorting
-  List<Book> _sortBooksLocally(List<Book> books, String sortBy, String sortDirection) {
+  List<Book> _sortBooksLocally(
+    List<Book> books,
+    String sortBy,
+    String sortDirection,
+  ) {
     switch (sortBy) {
       case 'title':
-        books.sort((a, b) => sortDirection == 'asc'
-            ? a.title.compareTo(b.title)
-            : b.title.compareTo(a.title));
+        books.sort(
+          (a, b) =>
+              sortDirection == 'asc'
+                  ? a.title.compareTo(b.title)
+                  : b.title.compareTo(a.title),
+        );
         break;
       case 'author':
-        books.sort((a, b) => sortDirection == 'asc'
-            ? a.author.compareTo(b.author)
-            : b.author.compareTo(a.author));
+        books.sort(
+          (a, b) =>
+              sortDirection == 'asc'
+                  ? a.author.compareTo(b.author)
+                  : b.author.compareTo(a.author),
+        );
         break;
       case 'price':
-        books.sort((a, b) => sortDirection == 'asc'
-            ? a.price.compareTo(b.price)
-            : b.price.compareTo(a.price));
+        books.sort(
+          (a, b) =>
+              sortDirection == 'asc'
+                  ? a.price.compareTo(b.price)
+                  : b.price.compareTo(a.price),
+        );
         break;
       case 'date':
-        books.sort((a, b) => sortDirection == 'asc'
-            ? a.createdAt.compareTo(b.createdAt)
-            : b.createdAt.compareTo(a.createdAt));
+        books.sort(
+          (a, b) =>
+              sortDirection == 'asc'
+                  ? a.createdAt.compareTo(b.createdAt)
+                  : b.createdAt.compareTo(a.createdAt),
+        );
         break;
       default:
         // Default sort by title
@@ -629,21 +626,25 @@ class ApiService {
   Future<Map<String, double>> getBookPriceRange() async {
     try {
       final books = await getBooks();
-      
+
       if (books.isEmpty) {
         return {'min': 0, 'max': 100}; // Default range if no books
       }
-      
-      double minPrice = books.map((book) => book.price).reduce((a, b) => a < b ? a : b);
-      double maxPrice = books.map((book) => book.price).reduce((a, b) => a > b ? a : b);
-      
+
+      double minPrice = books
+          .map((book) => book.price)
+          .reduce((a, b) => a < b ? a : b);
+      double maxPrice = books
+          .map((book) => book.price)
+          .reduce((a, b) => a > b ? a : b);
+
       // Round min down and max up to nearest whole numbers
       minPrice = (minPrice.floor()).toDouble();
       maxPrice = (maxPrice.ceil()).toDouble();
-      
+
       // Add small buffer to max
       maxPrice = maxPrice + 10;
-      
+
       return {'min': minPrice, 'max': maxPrice};
     } catch (e) {
       return {'min': 0, 'max': 100}; // Fallback range

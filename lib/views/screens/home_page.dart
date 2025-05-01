@@ -6,7 +6,6 @@ import 'package:flutterbookstore/models/category.dart';
 import 'package:flutterbookstore/services/api_service.dart';
 import 'package:flutterbookstore/services/cart_service.dart';
 import 'package:flutterbookstore/views/screens/login_page.dart';
-import 'package:flutterbookstore/views/screens/api_test_page.dart';
 import 'package:flutterbookstore/views/screens/cart_page.dart';
 import 'package:flutterbookstore/views/screens/profile_page.dart';
 import 'package:flutterbookstore/views/screens/all_books_page.dart';
@@ -31,7 +30,7 @@ class _HomePageState extends State<HomePage> {
   String _searchQuery = ''; // Store the current search query
   List<BookCategory> _categories = [];
   final TextEditingController _searchController = TextEditingController();
-  
+
   // Add state for category filtering
   BookCategory? _selectedCategory;
   bool _isLoadingCategory = false;
@@ -58,7 +57,8 @@ class _HomePageState extends State<HomePage> {
     try {
       // Fetch books from API
       _books = await _apiService.getBooks();
-      _filteredBooks = _books; // Initially, filtered books are the same as all books
+      _filteredBooks =
+          _books; // Initially, filtered books are the same as all books
 
       // Fetch categories from API
       _categories = await _apiService.getCategories();
@@ -106,7 +106,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final results = await _apiService.searchBooks(query);
-      
+
       setState(() {
         _filteredBooks = results;
         _isSearching = false;
@@ -115,16 +115,21 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isSearching = false;
         _errorMessage = 'Search failed: ${e.toString()}';
-        
+
         // Keep showing the current books instead of emptying the list
         // This provides a better user experience when search fails
-        _filteredBooks = _books.where((book) {
-          final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
-          final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
-          return titleMatch || authorMatch;
-        }).toList();
+        _filteredBooks =
+            _books.where((book) {
+              final titleMatch = book.title.toLowerCase().contains(
+                query.toLowerCase(),
+              );
+              final authorMatch = book.author.toLowerCase().contains(
+                query.toLowerCase(),
+              );
+              return titleMatch || authorMatch;
+            }).toList();
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Search error: Server unavailable'),
@@ -150,7 +155,7 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final books = await _apiService.getBooksByCategory(category.categoryID);
-      
+
       setState(() {
         _filteredBooks = books;
         _isLoadingCategory = false;
@@ -160,9 +165,12 @@ class _HomePageState extends State<HomePage> {
         _isLoadingCategory = false;
         _errorMessage = 'Failed to load books for category: ${e.toString()}';
         // Try to filter books locally if API fails
-        _filteredBooks = _books.where((book) => book.categoryID == category.categoryID).toList();
+        _filteredBooks =
+            _books
+                .where((book) => book.categoryID == category.categoryID)
+                .toList();
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error loading books for ${category.name}'),
@@ -195,8 +203,8 @@ class _HomePageState extends State<HomePage> {
       );
       return;
     }
-    
-    if (index == 3) {
+
+    if (index == 2) {
       // Navigate to profile page when Profile tab is selected
       Navigator.push(
         context,
@@ -247,10 +255,7 @@ class _HomePageState extends State<HomePage> {
     } else if (_errorMessage.contains('Invalid host')) {
       errorTitle = 'Invalid Host';
       errorMessage = 'The API server address is invalid';
-      troubleshootingTips = [
-        '• Check the API server settings',
-        '• Current server: ${AppConfig.apiHost}',
-      ];
+      troubleshootingTips = ['• Check the API server settings'];
     } else if (_errorMessage.contains('TimeoutException') ||
         _errorMessage.contains('Future not completed')) {
       errorTitle = 'Server Timeout';
@@ -310,50 +315,16 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: _fetchData,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColor.primary,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: Text('Try Again'),
+              ElevatedButton(
+                onPressed: _fetchData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
                   ),
-                  const SizedBox(width: 12),
-                  OutlinedButton(
-                    onPressed: () {
-                      _showServerSettingsDialog();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColor.primary),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: Text(
-                      'Server Settings',
-                      style: TextStyle(color: AppColor.primary),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: () {
-                  _runNetworkDiagnostics();
-                },
-                icon: Icon(Icons.network_check, color: AppColor.primary),
-                label: Text(
-                  'Run Network Diagnostics',
-                  style: TextStyle(color: AppColor.primary),
                 ),
+                child: Text('Try Again'),
               ),
             ],
           ),
@@ -431,22 +402,6 @@ class _HomePageState extends State<HomePage> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.api),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ApiTestPage()),
-            );
-          },
-          tooltip: 'Test API Connection',
-        ),
-        IconButton(
-          onPressed: () {
-            _showServerSettingsDialog();
-          },
-          icon: Icon(Icons.settings, color: AppColor.dark),
-        ),
-        IconButton(
           onPressed: () {},
           icon: Icon(Icons.notifications_outlined, color: AppColor.dark),
         ),
@@ -475,10 +430,7 @@ class _HomePageState extends State<HomePage> {
                     color: AppColor.primary,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  constraints: BoxConstraints(
-                    minWidth: 16,
-                    minHeight: 16,
-                  ),
+                  constraints: BoxConstraints(minWidth: 16, minHeight: 16),
                   child: Text(
                     '${CartService.itemCount}',
                     style: TextStyle(
@@ -493,81 +445,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ],
-    );
-  }
-
-  // Show server settings dialog
-  void _showServerSettingsDialog() {
-    // Controllers for text fields
-    final hostController = TextEditingController(text: AppConfig.apiHost);
-    final portController = TextEditingController(text: AppConfig.apiPort.toString());
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Server Settings'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'These settings control the connection to your backend API server. '
-              'Changes will apply after restarting the app.',
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: hostController,
-              decoration: InputDecoration(
-                labelText: 'API Host',
-                border: OutlineInputBorder(),
-                helperText: 'Example: api.example.com or 192.168.1.100',
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: portController,
-              decoration: InputDecoration(
-                labelText: 'API Port',
-                border: OutlineInputBorder(),
-                helperText: 'Standard HTTP port is 80, HTTPS is 443',
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Current API URL: ${AppConfig.apiBaseUrl}',
-                    style: TextStyle(fontSize: 12, color: Colors.blue),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // Save settings logic would go here (requires more infrastructure)
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Settings functionality is not implemented yet'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
-              Navigator.of(context).pop();
-            },
-            child: Text('Save Settings'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -614,29 +491,13 @@ class _HomePageState extends State<HomePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        TextButton.icon(
-                          icon: Icon(Icons.refresh, size: 16),
-                          label: Text('Run Network Diagnostics'),
-                          onPressed: () {
-                            // Add network diagnostics functionality
-                            _runNetworkDiagnostics();
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red.shade700,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton.icon(
-                          icon: Icon(Icons.settings, size: 16),
-                          label: Text('Server Settings'),
-                          onPressed: () {
-                            // Navigate to server settings page
-                            _showServerSettingsDialog();
-                          },
+                        ElevatedButton(
+                          onPressed: _fetchData,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red.shade100,
                             foregroundColor: Colors.red.shade700,
                           ),
+                          child: Text('Try Again'),
                         ),
                       ],
                     ),
@@ -662,10 +523,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.category,
-                      color: AppColor.primary,
-                    ),
+                    Icon(Icons.category, color: AppColor.primary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -686,9 +544,9 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           if (_selectedCategory != null) const SizedBox(height: 16),
-          
+
           // If searching, show search results instead of regular sections
-          if (_isSearching || _isLoadingCategory) 
+          if (_isSearching || _isLoadingCategory)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 40),
@@ -697,18 +555,24 @@ class _HomePageState extends State<HomePage> {
                     CircularProgressIndicator(color: AppColor.primary),
                     const SizedBox(height: 16),
                     Text(
-                      _isSearching 
-                        ? 'Searching...' 
-                        : 'Loading books for ${_selectedCategory!.name}...',
-                      style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                      _isSearching
+                          ? 'Searching...'
+                          : 'Loading books for ${_selectedCategory!.name}...',
+                      style: TextStyle(
+                        color: AppColor.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
               ),
             )
           else if (_searchQuery.isNotEmpty) ...[
-            _buildBooksSection('Search Results for "${_searchQuery}"', _filteredBooks),
-            if (_filteredBooks.isEmpty) 
+            _buildBooksSection(
+              'Search Results for "${_searchQuery}"',
+              _filteredBooks,
+            ),
+            if (_filteredBooks.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -718,7 +582,10 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 16),
                       Text(
                         'No books found for "${_searchQuery}"',
-                        style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: AppColor.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -728,8 +595,11 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24),
           ] else if (_selectedCategory != null) ...[
             // Show books for selected category
-            _buildBooksSection('Books in ${_selectedCategory!.name}', _filteredBooks),
-            if (_filteredBooks.isEmpty) 
+            _buildBooksSection(
+              'Books in ${_selectedCategory!.name}',
+              _filteredBooks,
+            ),
+            if (_filteredBooks.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -739,7 +609,10 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 16),
                       Text(
                         'No books found in ${_selectedCategory!.name} category',
-                        style: TextStyle(color: AppColor.grey, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                          color: AppColor.grey,
+                          fontWeight: FontWeight.w500,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -757,7 +630,10 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 24),
 
             // New Releases Section
-            _buildBooksSection('New Releases', _books.reversed.take(5).toList()),
+            _buildBooksSection(
+              'New Releases',
+              _books.reversed.take(5).toList(),
+            ),
             const SizedBox(height: 24),
 
             // Books From API
@@ -832,7 +708,9 @@ class _HomePageState extends State<HomePage> {
                           child: CategoryCard(
                             categoryName: category.name,
                             categoryId: category.categoryID,
-                            isSelected: _selectedCategory?.categoryID == category.categoryID,
+                            isSelected:
+                                _selectedCategory?.categoryID ==
+                                category.categoryID,
                             onTap: () => _fetchBooksByCategory(category),
                           ),
                         );
@@ -908,9 +786,10 @@ class _HomePageState extends State<HomePage> {
                           child: BookCard(
                             title: book.title,
                             author: book.author,
-                            coverImage: book.image != null && book.image!.isNotEmpty 
-                              ? book.image! 
-                              : 'https://via.placeholder.com/150/0d5c46/ffffff?text=${Uri.encodeComponent(book.title)}',
+                            coverImage:
+                                book.image != null && book.image!.isNotEmpty
+                                    ? book.image!
+                                    : 'https://via.placeholder.com/150/0d5c46/ffffff?text=${Uri.encodeComponent(book.title)}',
                             price: book.price,
                             rating: 4.5, // Default rating
                             bookData: book,
@@ -940,7 +819,9 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
         image: DecorationImage(
-          image: NetworkImage('https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000'),
+          image: NetworkImage(
+            'https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1000',
+          ),
           fit: BoxFit.cover,
           colorFilter: const ColorFilter.mode(
             Color.fromRGBO(13, 92, 70, 0.8),
@@ -1147,11 +1028,6 @@ class _HomePageState extends State<HomePage> {
               label: 'Books',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark_border_outlined),
-              activeIcon: Icon(Icons.bookmark),
-              label: 'Wishlist',
-            ),
-            BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
               label: 'Profile',
@@ -1169,85 +1045,5 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-
-  // Run network diagnostics and show results
-  Future<void> _runNetworkDiagnostics() async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        title: Text('Running Diagnostics...'),
-        content: SizedBox(
-          height: 100,
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
-        ),
-      ),
-    );
-
-    try {
-      final result = await _apiService.checkServerConnection();
-      
-      // Pop the loading dialog
-      Navigator.of(context).pop();
-      
-      // Show the results
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Network Diagnostics Results'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Connected to network: ${result['isConnected'] ? 'Yes' : 'No'}'),
-              Text('Server response code: ${result['statusCode'] ?? 'N/A'}'),
-              Text('Response time: ${result['responseTime']}ms'),
-              if (result['error'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Text(
-                    'Error: ${result['error']}',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _fetchData(); // Retry data fetch
-              },
-              child: Text('Retry Fetch'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      // Pop the loading dialog
-      Navigator.of(context).pop();
-      
-      // Show error dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Diagnostics Failed'),
-          content: Text('Could not run network diagnostics: $e'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Close'),
-            ),
-          ],
-        ),
-      );
-    }
   }
 }
