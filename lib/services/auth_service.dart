@@ -118,7 +118,7 @@ class AuthService {
 
       print('====== LOGIN REQUEST ======');
       print('URL: $loginUrl');
-      print('Headers: ${apiKeyHeaders}');
+      print('Headers: $apiKeyHeaders');
       print('Body: ${json.encode(loginData)}');
 
       // Use apiKeyHeaders for initial request
@@ -208,7 +208,7 @@ class AuthService {
 
       print('====== REGISTER REQUEST ======');
       print('URL: $registerUrl');
-      print('Headers: ${apiKeyHeaders}');
+      print('Headers: $apiKeyHeaders');
       print('Body: ${json.encode(registerData)}');
 
       // Make sure to use apiKeyHeaders with X-API-Key

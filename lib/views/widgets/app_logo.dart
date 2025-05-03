@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
-import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AppLogo extends StatelessWidget {
   final double height;
 
-  const AppLogo({
-    Key? key,
-    this.height = 30,
-  }) : super(key: key);
+  const AppLogo({super.key, this.height = 30});
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +37,8 @@ class AppLogo extends StatelessWidget {
       style: TextStyle(
         color: AppColor.dark,
         fontWeight: FontWeight.w700,
-        fontSize: height * 2/3,
+        fontSize: height * 2 / 3,
       ),
     );
   }
-} 
+}

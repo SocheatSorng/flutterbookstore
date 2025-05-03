@@ -15,14 +15,14 @@ class BookCard extends StatelessWidget {
   final Book? bookData;
 
   const BookCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.author,
     this.coverImage,
     required this.price,
     required this.rating,
     this.bookData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class BookCard extends StatelessWidget {
           );
         }
       },
-      child: Container(
+      child: SizedBox(
         width: 150,
         height: 290,
         child: Column(
@@ -70,10 +70,12 @@ class BookCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
-                    child: coverImage == null
-                      ? _buildPlaceholderCover()
-                      : (coverImage?.startsWith('http') == true || coverImage?.startsWith('https') == true)
-                          ? Image.network(
+                    child:
+                        coverImage == null
+                            ? _buildPlaceholderCover()
+                            : (coverImage?.startsWith('http') == true ||
+                                coverImage?.startsWith('https') == true)
+                            ? Image.network(
                               coverImage!,
                               width: 150,
                               height: 200,
@@ -82,7 +84,7 @@ class BookCard extends StatelessWidget {
                                 return _buildPlaceholderCover();
                               },
                             )
-                          : Image.asset(
+                            : Image.asset(
                               coverImage!,
                               width: 150,
                               height: 200,
@@ -124,7 +126,7 @@ class BookCard extends StatelessWidget {
             Text(
               'by $author',
               style: TextStyle(
-                fontSize: 12, 
+                fontSize: 12,
                 color: AppColor.grey,
                 fontStyle: FontStyle.italic,
               ),
@@ -151,7 +153,10 @@ class BookCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.amber.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.withOpacity(0.5), width: 0.5),
+                    border: Border.all(
+                      color: Colors.amber.withOpacity(0.5),
+                      width: 0.5,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -195,11 +200,7 @@ class BookCard extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.book,
-            size: 40,
-            color: AppColor.primary,
-          ),
+          Icon(Icons.book, size: 40, color: AppColor.primary),
           SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -223,7 +224,7 @@ class BookCard extends StatelessWidget {
 class AddToCartButton extends StatefulWidget {
   final Book book;
 
-  const AddToCartButton({Key? key, required this.book}) : super(key: key);
+  const AddToCartButton({super.key, required this.book});
 
   @override
   _AddToCartButtonState createState() => _AddToCartButtonState();
@@ -307,10 +308,10 @@ class _AddToCartButtonState extends State<AddToCartButton> {
                   MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
-              child: Text('Login'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
               ),
+              child: Text('Login'),
             ),
           ],
         );
@@ -340,22 +341,21 @@ class _AddToCartButtonState extends State<AddToCartButton> {
           child: Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-            ),
-            child: _isLoading
-                ? Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(
+            decoration: BoxDecoration(shape: BoxShape.circle),
+            child:
+                _isLoading
+                    ? Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                    : Icon(
+                      Icons.add_shopping_cart,
                       color: Colors.white,
-                      strokeWidth: 2,
+                      size: 16,
                     ),
-                  )
-                : Icon(
-                    Icons.add_shopping_cart,
-                    color: Colors.white,
-                    size: 16,
-                  ),
           ),
         ),
       ),

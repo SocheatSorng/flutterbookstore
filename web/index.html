@@ -31,8 +31,66 @@
 
   <title>flutterbookstore</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    var serviceWorkerVersion = null;
+  </script>
+  <script src="flutter.js" defer></script>
+  <script>
+    // PayPal return URL handler
+    window.addEventListener('load', function() {
+      // Check if this is a PayPal return
+      if (window.location.href.includes('flutterbookstore://paypalpay') ||
+          window.location.href.includes('flutterbookstore://cancel')) {
+        // Call the Dart function to handle the return
+        if (window.handlePayPalReturn) {
+          window.handlePayPalReturn(window.location.href);
+        }
+      }
+
+      // Check for PayPal return data in localStorage (from paypal-return.html or paypal-cancel.html)
+      const paypalReturnData = localStorage.getItem('paypalReturnData');
+      if (paypalReturnData) {
+        // Remove the data from localStorage to prevent reprocessing
+        localStorage.removeItem('paypalReturnData');
+
+        // Wait for Flutter to initialize and then process the return
+        window.flutterReadyCallback = function() {
+          if (window.handlePayPalReturn) {
+            window.handlePayPalReturn(paypalReturnData);
+          }
+        };
+      }
+
+      // Check for PayPal cancel data
+      const paypalCancelData = localStorage.getItem('paypalCancelData');
+      if (paypalCancelData) {
+        // Remove the data from localStorage
+        localStorage.removeItem('paypalCancelData');
+
+        // Wait for Flutter to initialize and then process the cancel
+        window.flutterReadyCallback = function() {
+          if (window.handlePayPalReturn) {
+            window.handlePayPalReturn(paypalCancelData);
+          }
+        };
+      }
+    });
+  </script>
 </head>
 <body>
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function(ev) {
+      _flutter.loader.loadEntrypoint({
+        serviceWorker: {
+          serviceWorkerVersion: serviceWorkerVersion,
+        },
+        onEntrypointLoaded: function(engineInitializer) {
+          engineInitializer.initializeEngine().then(function(appRunner) {
+            appRunner.runApp();
+          });
+        }
+      });
+    });
+  </script>
 </body>
 </html>

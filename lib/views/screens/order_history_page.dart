@@ -8,7 +8,7 @@ import '../../views/widgets/main_app_bar_widget.dart';
 import 'package:flutterbookstore/services/cart_service.dart';
 
 class OrderHistoryPage extends StatefulWidget {
-  const OrderHistoryPage({Key? key}) : super(key: key);
+  const OrderHistoryPage({super.key});
 
   @override
   _OrderHistoryPageState createState() => _OrderHistoryPageState();
@@ -45,7 +45,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     try {
       final orders = await OrderService.getOrderHistory();
       print('Loaded ${orders.length} orders on the order history page');
-      
+
       setState(() {
         _orders = orders;
         _isLoading = false;
@@ -61,10 +61,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MainAppBar(
-        cartValue: _cartItemCount,
-        showBackButton: true,
-      ),
+      appBar: MainAppBar(cartValue: _cartItemCount, showBackButton: true),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -80,22 +77,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             ),
           ),
           if (_isLoading)
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            )
+            const Expanded(child: Center(child: CircularProgressIndicator()))
           else if (_errorMessage.isNotEmpty)
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 48,
-                    ),
+                    Icon(Icons.error_outline, color: Colors.red, size: 48),
                     SizedBox(height: 16),
                     Text(
                       _errorMessage,
@@ -105,10 +94,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _loadOrders,
-                      child: Text('Try Again'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
                       ),
+                      child: Text('Try Again'),
                     ),
                   ],
                 ),
@@ -137,26 +126,29 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     SizedBox(height: 8),
                     Text(
                       'When you place orders, they will appear here',
-                      style: TextStyle(
-                        color: AppColor.grey,
-                      ),
+                      style: TextStyle(color: AppColor.grey),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
                       },
-                      child: Text(
-                        'Browse Books',
-                        style: TextStyle(color: Colors.white),
-                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
-                        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
+                      ),
+                      child: Text(
+                        'Browse Books',
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                   ],
@@ -186,7 +178,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     // Format date
     final dateFormat = DateFormat('MMM dd, yyyy');
     final formattedDate = dateFormat.format(order.orderDate);
-    
+
     // Status color
     Color statusColor;
     switch (order.status.toLowerCase()) {
@@ -210,9 +202,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -259,17 +249,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               SizedBox(height: 8),
               Text(
                 formattedDate,
-                style: TextStyle(
-                  color: AppColor.grey,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppColor.grey, fontSize: 12),
               ),
               SizedBox(height: 12),
               Text(
                 '${order.items.length} ${order.items.length == 1 ? 'item' : 'items'}',
-                style: TextStyle(
-                  color: AppColor.dark,
-                ),
+                style: TextStyle(color: AppColor.dark),
               ),
               SizedBox(height: 12),
               Row(
@@ -277,10 +262,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 children: [
                   Text(
                     'Total:',
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppColor.grey, fontSize: 14),
                   ),
                   Text(
                     '\$${order.total.toStringAsFixed(2)}',
@@ -295,18 +277,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(
-                    Icons.payment_outlined,
-                    size: 16,
-                    color: AppColor.grey,
-                  ),
+                  Icon(Icons.payment_outlined, size: 16, color: AppColor.grey),
                   SizedBox(width: 4),
                   Text(
                     order.paymentMethod,
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColor.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -316,4 +291,4 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       ),
     );
   }
-} 
+}

@@ -5,23 +5,21 @@ import '../../views/screens/order_details_page.dart';
 class OrderSuccessPage extends StatefulWidget {
   final String? orderId;
 
-  const OrderSuccessPage({
-    Key? key,
-    this.orderId,
-  }) : super(key: key);
+  const OrderSuccessPage({super.key, this.orderId});
 
   @override
   _OrderSuccessPageState createState() => _OrderSuccessPageState();
 }
 
-class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerProviderStateMixin {
+class _OrderSuccessPageState extends State<OrderSuccessPage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     print('OrderSuccessPage initialized with orderId: ${widget.orderId}');
 
     // Set up animation for success icon
@@ -30,12 +28,10 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerPr
       duration: Duration(milliseconds: 800),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.elasticOut,
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     // Start the animation
     _controller.forward();
@@ -132,14 +128,6 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerPr
                 onPressed: () {
                   Navigator.of(context).popUntil((route) => route.isFirst);
                 },
-                child: Text(
-                  'Continue Shopping',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   backgroundColor: AppColor.primary,
@@ -147,6 +135,14 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerPr
                     borderRadius: BorderRadius.circular(16),
                   ),
                   elevation: 0,
+                ),
+                child: Text(
+                  'Continue Shopping',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -161,7 +157,9 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerPr
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => OrderDetailsPage(orderId: widget.orderId!),
+                        builder:
+                            (context) =>
+                                OrderDetailsPage(orderId: widget.orderId!),
                       ),
                     );
                   } else {
@@ -173,19 +171,19 @@ class _OrderSuccessPageState extends State<OrderSuccessPage> with SingleTickerPr
                     );
                   }
                 },
+                style: OutlinedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  side: BorderSide(color: AppColor.primary),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
                 child: Text(
                   'Track Order',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColor.primary,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  side: BorderSide(color: AppColor.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
                   ),
                 ),
               ),

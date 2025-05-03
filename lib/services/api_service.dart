@@ -147,9 +147,7 @@ class ApiService {
         } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
-          if (directData is List) {
-            return directData.map((json) => Book.fromJson(json)).toList();
-          }
+          return directData.map((json) => Book.fromJson(json)).toList();
           throw Exception(
             'Failed to load books: ${data['message'] ?? 'Unknown error'}',
           );
@@ -201,11 +199,7 @@ class ApiService {
         } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
-          if (directData is List) {
-            return directData
-                .map((json) => BookCategory.fromJson(json))
-                .toList();
-          }
+          return directData.map((json) => BookCategory.fromJson(json)).toList();
           throw Exception(
             'Failed to load categories: ${data['message'] ?? 'Unknown error'}',
           );
@@ -371,9 +365,7 @@ class ApiService {
         } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
-          if (directData is List) {
-            return directData.map((json) => Book.fromJson(json)).toList();
-          }
+          return directData.map((json) => Book.fromJson(json)).toList();
           throw Exception(
             'Failed to load books for category: ${data['message'] ?? 'Unknown error'}',
           );
@@ -404,7 +396,7 @@ class ApiService {
       try {
         final Map<String, dynamic> data = json.decode(response.body);
 
-        if (data != null && data['data'] != null) {
+        if (data['data'] != null) {
           final Map<String, dynamic> detailJson = data['data'];
           return BookDetail.fromJson(detailJson);
         } else {
@@ -474,9 +466,7 @@ class ApiService {
         } else {
           // Fallback: Try to parse as direct array
           final List<dynamic> directData = json.decode(response.body);
-          if (directData is List) {
-            return directData.map((json) => Book.fromJson(json)).toList();
-          }
+          return directData.map((json) => Book.fromJson(json)).toList();
           throw Exception(
             'Failed to load sorted books: ${data['message'] ?? 'Unknown error'}',
           );

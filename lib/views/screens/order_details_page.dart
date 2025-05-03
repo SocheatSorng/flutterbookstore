@@ -9,10 +9,7 @@ import 'package:flutterbookstore/services/cart_service.dart';
 class OrderDetailsPage extends StatefulWidget {
   final String orderId;
 
-  const OrderDetailsPage({
-    Key? key,
-    required this.orderId,
-  }) : super(key: key);
+  const OrderDetailsPage({super.key, required this.orderId});
 
   @override
   _OrderDetailsPageState createState() => _OrderDetailsPageState();
@@ -40,11 +37,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     try {
       final order = await OrderService.getOrderDetails(widget.orderId);
       if (order != null) {
-        print('Loaded order details for order ID: ${order.id} with ${order.items.length} items');
+        print(
+          'Loaded order details for order ID: ${order.id} with ${order.items.length} items',
+        );
       } else {
         print('No order details found for ID: ${widget.orderId}');
       }
-      
+
       setState(() {
         _order = order;
         _isLoading = false;
@@ -69,44 +68,36 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MainAppBar(
-        cartValue: _cartItemCount,
-        showBackButton: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage.isNotEmpty
+      appBar: MainAppBar(cartValue: _cartItemCount, showBackButton: true),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage.isNotEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 48,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red, size: 48),
+                    SizedBox(height: 16),
+                    Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadOrderDetails,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColor.primary,
                       ),
-                      SizedBox(height: 16),
-                      Text(
-                        _errorMessage,
-                        style: TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadOrderDetails,
-                        child: Text('Try Again'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColor.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+                      child: Text('Try Again'),
+                    ),
+                  ],
+                ),
+              )
               : _order == null
-                  ? Center(
-                      child: Text('Order not found'),
-                    )
-                  : _buildOrderDetails(),
+              ? Center(child: Text('Order not found'))
+              : _buildOrderDetails(),
     );
   }
 
@@ -136,17 +127,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             ],
           ),
           SizedBox(height: 8),
-          
+
           // Order Date
           Text(
             'Placed on $formattedDate',
-            style: TextStyle(
-              color: AppColor.grey,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColor.grey, fontSize: 14),
           ),
           SizedBox(height: 24),
-          
+
           // Delivery Information
           _buildSectionTitle('Delivery Information'),
           Card(
@@ -162,7 +150,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, color: AppColor.primary, size: 20),
+                      Icon(
+                        Icons.location_on_outlined,
+                        color: AppColor.primary,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Shipping Address',
@@ -176,17 +168,14 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   SizedBox(height: 8),
                   Text(
                     order.deliveryAddress,
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppColor.grey, fontSize: 14),
                   ),
                 ],
               ),
             ),
           ),
           SizedBox(height: 24),
-          
+
           // Payment Information
           _buildSectionTitle('Payment Information'),
           Card(
@@ -202,7 +191,11 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.payment_outlined, color: AppColor.primary, size: 20),
+                      Icon(
+                        Icons.payment_outlined,
+                        color: AppColor.primary,
+                        size: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(
                         'Payment Method',
@@ -216,20 +209,17 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   SizedBox(height: 8),
                   Text(
                     order.paymentMethod,
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: AppColor.grey, fontSize: 14),
                   ),
                 ],
               ),
             ),
           ),
           SizedBox(height: 24),
-          
+
           // Order Items
           _buildSectionTitle('Order Items (${order.items.length})'),
-          
+
           // Order Items List
           ListView.builder(
             shrinkWrap: true,
@@ -240,7 +230,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
             },
           ),
           SizedBox(height: 24),
-          
+
           // Order Summary
           _buildSectionTitle('Order Summary'),
           Card(
@@ -253,9 +243,15 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
               padding: EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _buildSummaryRow('Subtotal', '\$${_calculateSubtotal(order).toStringAsFixed(2)}'),
+                  _buildSummaryRow(
+                    'Subtotal',
+                    '\$${_calculateSubtotal(order).toStringAsFixed(2)}',
+                  ),
                   _buildSummaryRow('Shipping Fee', '\$0.00'),
-                  _buildSummaryRow('Tax', '\$${(_calculateSubtotal(order) * 0.05).toStringAsFixed(2)}'),
+                  _buildSummaryRow(
+                    'Tax',
+                    '\$${(_calculateSubtotal(order) * 0.05).toStringAsFixed(2)}',
+                  ),
                   Divider(),
                   _buildSummaryRow(
                     'Total',
@@ -329,10 +325,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
     if (item.imageUrl != null && item.imageUrl!.isNotEmpty) {
       if (item.imageUrl!.startsWith('assets/')) {
         // Local asset image
-        imageWidget = Image.asset(
-          item.imageUrl!,
-          fit: BoxFit.cover,
-        );
+        imageWidget = Image.asset(item.imageUrl!, fit: BoxFit.cover);
       } else {
         // Network image with error handling
         imageWidget = Image.network(
@@ -340,23 +333,13 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             print('Error loading image: $error');
-            return Center(
-              child: Icon(
-                Icons.book,
-                color: AppColor.grey,
-              ),
-            );
+            return Center(child: Icon(Icons.book, color: AppColor.grey));
           },
         );
       }
     } else {
       // No image available
-      imageWidget = Center(
-        child: Icon(
-          Icons.book,
-          color: AppColor.grey,
-        ),
-      );
+      imageWidget = Center(child: Icon(Icons.book, color: AppColor.grey));
     }
 
     return Card(
@@ -408,10 +391,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
                   SizedBox(height: 4),
                   Text(
                     'Quantity: ${item.quantity}',
-                    style: TextStyle(
-                      color: AppColor.grey,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: AppColor.grey, fontSize: 12),
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -461,4 +441,4 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
   double _calculateSubtotal(Order order) {
     return order.items.fold(0, (sum, item) => sum + item.subtotal);
   }
-} 
+}

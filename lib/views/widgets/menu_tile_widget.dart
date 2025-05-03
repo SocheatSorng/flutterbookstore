@@ -11,7 +11,7 @@ class MenuTileWidget extends StatelessWidget {
   final Function() onTap;
 
   const MenuTileWidget({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     this.subtitle = '',
@@ -19,7 +19,7 @@ class MenuTileWidget extends StatelessWidget {
     this.titleColor = AppColor.dark,
     this.iconBackground,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

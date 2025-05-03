@@ -5,7 +5,7 @@ import 'package:flutterbookstore/services/auth_service.dart';
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
-  const EditProfilePage({Key? key, this.userData}) : super(key: key);
+  const EditProfilePage({super.key, this.userData});
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();

@@ -5,13 +5,14 @@ import 'package:flutterbookstore/views/screens/register_page.dart';
 import 'package:flutterbookstore/views/screens/home_page.dart';
 
 class WelcomePage extends StatefulWidget {
-  const WelcomePage({Key? key}) : super(key: key);
+  const WelcomePage({super.key});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
 }
 
-class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStateMixin {
+class _WelcomePageState extends State<WelcomePage>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -32,10 +33,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutQuint,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutQuint),
+    );
 
     _animationController.forward();
   }
@@ -63,7 +63,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 20),
-                    
+
                     // Logo and branding with animation
                     FadeTransition(
                       opacity: _fadeAnimation,
@@ -116,7 +116,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColor.primary.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
@@ -135,9 +138,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 50),
-                    
+
                     // App title and description with slide animation
                     SlideTransition(
                       position: _slideAnimation,
@@ -170,7 +173,10 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                             ),
                             const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 20,
+                              ),
                               decoration: BoxDecoration(
                                 color: AppColor.lightGrey.withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(16),
@@ -193,9 +199,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: MediaQuery.of(context).size.height * 0.08),
-                    
+
                     // Action buttons with animations
                     SlideTransition(
                       position: _slideAnimation,
@@ -212,7 +218,8 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                                       onPressed: () {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (context) => const LoginPage(),
+                                            builder:
+                                                (context) => const LoginPage(),
                                           ),
                                         );
                                       },
@@ -220,13 +227,17 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                                         backgroundColor: AppColor.primary,
                                         foregroundColor: Colors.white,
                                         elevation: 3,
-                                        shadowColor: AppColor.primary.withOpacity(0.3),
+                                        shadowColor: AppColor.primary
+                                            .withOpacity(0.3),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
                                           Icon(Icons.login_rounded, size: 20),
                                           SizedBox(width: 10),
@@ -250,7 +261,9 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                                       onPressed: () {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (context) => const RegisterPage(),
+                                            builder:
+                                                (context) =>
+                                                    const RegisterPage(),
                                           ),
                                         );
                                       },
@@ -258,15 +271,24 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                                         backgroundColor: Colors.white,
                                         foregroundColor: AppColor.primary,
                                         elevation: 0,
-                                        side: BorderSide(color: AppColor.primary, width: 2),
+                                        side: BorderSide(
+                                          color: AppColor.primary,
+                                          width: 2,
+                                        ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                         ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: const [
-                                          Icon(Icons.person_add_outlined, size: 20),
+                                          Icon(
+                                            Icons.person_add_outlined,
+                                            size: 20,
+                                          ),
                                           SizedBox(width: 10),
                                           Text(
                                             'Register',
@@ -289,16 +311,22 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                               child: TextButton(
                                 onPressed: () {
                                   Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(builder: (context) => const HomePage()),
+                                    MaterialPageRoute(
+                                      builder: (context) => const HomePage(),
+                                    ),
                                   );
                                 },
                                 style: TextButton.styleFrom(
-                                  foregroundColor: AppColor.dark.withOpacity(0.7),
+                                  foregroundColor: AppColor.dark.withOpacity(
+                                    0.7,
+                                  ),
                                   padding: const EdgeInsets.all(0),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  backgroundColor: Colors.grey.withOpacity(0.05),
+                                  backgroundColor: Colors.grey.withOpacity(
+                                    0.05,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -308,7 +336,7 @@ class _WelcomePageState extends State<WelcomePage> with SingleTickerProviderStat
                                     Text(
                                       'Continue as Guest',
                                       style: TextStyle(
-                                        fontWeight: FontWeight.w600, 
+                                        fontWeight: FontWeight.w600,
                                         fontSize: 16,
                                       ),
                                     ),

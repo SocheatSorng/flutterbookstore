@@ -7,7 +7,11 @@ class CartTile extends StatefulWidget {
   final Cart cart;
   final Function onQuantityChanged;
 
-  CartTile({required this.cart, required this.onQuantityChanged});
+  const CartTile({
+    super.key,
+    required this.cart,
+    required this.onQuantityChanged,
+  });
 
   @override
   _CartTileState createState() => _CartTileState();

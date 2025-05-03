@@ -8,18 +8,19 @@ class CategoryCard extends StatefulWidget {
   final bool isSelected;
 
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.categoryName,
     this.categoryId,
     this.onTap,
     this.isSelected = false,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryCard> createState() => _CategoryCardState();
 }
 
-class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderStateMixin {
+class _CategoryCardState extends State<CategoryCard>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   bool _isHovered = false;
@@ -31,12 +32,9 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -66,11 +64,11 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
       _isHovered = false;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final gradientColors = _getGradientColors(widget.categoryName);
-    
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -79,10 +77,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
-          return Transform.scale(
-            scale: _scaleAnimation.value,
-            child: child,
-          );
+          return Transform.scale(scale: _scaleAnimation.value, child: child);
         },
         child: Container(
           width: 100,
@@ -91,19 +86,18 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: widget.isSelected 
-                  ? [
-                      AppColor.primary.withOpacity(0.7),
-                      AppColor.primary,
-                    ] 
-                  : gradientColors,
+              colors:
+                  widget.isSelected
+                      ? [AppColor.primary.withOpacity(0.7), AppColor.primary]
+                      : gradientColors,
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: widget.isSelected 
-                    ? AppColor.primary.withOpacity(0.3)
-                    : gradientColors[0].withOpacity(0.3),
+                color:
+                    widget.isSelected
+                        ? AppColor.primary.withOpacity(0.3)
+                        : gradientColors[0].withOpacity(0.3),
                 spreadRadius: 1,
                 blurRadius: 8,
                 offset: const Offset(0, 4),
@@ -124,7 +118,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
                   ),
                 ),
               ),
-              
+
               // Content
               Padding(
                 padding: const EdgeInsets.all(10.0),
@@ -157,7 +151,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6, 
+                          horizontal: 6,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
@@ -182,7 +176,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
                   ],
                 ),
               ),
-              
+
               // Selected Indicator
               if (widget.isSelected)
                 Positioned(
@@ -266,7 +260,7 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
         return Icons.category;
     }
   }
-  
+
   List<Color> _getGradientColors(String category) {
     switch (category.toLowerCase()) {
       case 'fiction':
@@ -307,16 +301,17 @@ class _CategoryCardState extends State<CategoryCard> with SingleTickerProviderSt
 
 class PatternPainter extends CustomPainter {
   final bool isSelected;
-  
+
   PatternPainter({this.isSelected = false});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-      
+    final paint =
+        Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0;
+
     // Draw pattern of circles or dots
     for (int i = 0; i < 5; i++) {
       for (int j = 0; j < 5; j++) {
@@ -325,21 +320,13 @@ class PatternPainter extends CustomPainter {
         canvas.drawCircle(Offset(x, y), 2, paint);
       }
     }
-    
+
     // Draw some diagonal lines
-    canvas.drawLine(
-      Offset(0, 0), 
-      Offset(size.width, size.height), 
-      paint,
-    );
-    
-    canvas.drawLine(
-      Offset(0, size.height), 
-      Offset(size.width, 0), 
-      paint,
-    );
+    canvas.drawLine(Offset(0, 0), Offset(size.width, size.height), paint);
+
+    canvas.drawLine(Offset(0, size.height), Offset(size.width, 0), paint);
   }
-  
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-} 
+}
