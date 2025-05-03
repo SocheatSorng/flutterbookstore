@@ -9,7 +9,7 @@ import 'package:flutterbookstore/views/screens/book_detail_page.dart';
 import 'dart:async';
 
 class AllBooksPage extends StatefulWidget {
-  const AllBooksPage({Key? key}) : super(key: key);
+  const AllBooksPage({super.key});
 
   @override
   State<AllBooksPage> createState() => _AllBooksPageState();
@@ -27,27 +27,27 @@ class _AllBooksPageState extends State<AllBooksPage> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   // Search suggestions
   List<Book> _searchSuggestions = [];
   bool _isLoadingSuggestions = false;
   bool _showSuggestions = false;
   Timer? _debounceTimer;
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   bool _isGridView = true; // Toggle between grid and list view
 
   // Sorting options
   String _sortBy = 'title'; // Default sort field
   String _sortDirection = 'asc'; // Default sort direction
-  
+
   // Price filter options
   RangeValues _priceRange = const RangeValues(0, 100);
   double _minPrice = 0;
   double _maxPrice = 100;
   bool _isPriceRangeLoaded = false;
   bool _isPriceFilterActive = false;
-  
+
   // Map for displaying sort options to user
   final Map<String, String> _sortOptions = {
     'title': 'Title',
@@ -62,7 +62,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
     _fetchBooks();
     _fetchCategories();
     _fetchPriceRange();
-    
+
     // Add listener to focus node to show/hide suggestions
     _searchFocusNode.addListener(() {
       if (!_searchFocusNode.hasFocus) {
@@ -140,7 +140,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
         _books = await _apiService.getBooks();
       }
       _filterBooks();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -168,7 +168,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
         maxPrice: _isPriceFilterActive ? _priceRange.end : null,
       );
       _filterBooks();
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -201,7 +201,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
         );
         _filterBooks();
       }
-      
+
       setState(() {
         _isLoading = false;
       });
@@ -222,11 +222,16 @@ class _AllBooksPageState extends State<AllBooksPage> {
     }
 
     setState(() {
-      _filteredBooks = _books.where((book) {
-        final titleMatch = book.title.toLowerCase().contains(_searchQuery.toLowerCase());
-        final authorMatch = book.author.toLowerCase().contains(_searchQuery.toLowerCase());
-        return titleMatch || authorMatch;
-      }).toList();
+      _filteredBooks =
+          _books.where((book) {
+            final titleMatch = book.title.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+            final authorMatch = book.author.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+            return titleMatch || authorMatch;
+          }).toList();
     });
   }
 
@@ -235,7 +240,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
       _searchQuery = query;
     });
     _filterBooks();
-    
+
     // Handle search suggestions when user types
     if (query.isNotEmpty) {
       _debounceSearchSuggestions(query);
@@ -246,19 +251,19 @@ class _AllBooksPageState extends State<AllBooksPage> {
       });
     }
   }
-  
+
   void _debounceSearchSuggestions(String query) {
     // Cancel previous timer if it exists
     if (_debounceTimer?.isActive ?? false) {
       _debounceTimer!.cancel();
     }
-    
+
     // Set a new timer to delay the API call
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       _getSearchSuggestions(query);
     });
   }
-  
+
   Future<void> _getSearchSuggestions(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -268,28 +273,34 @@ class _AllBooksPageState extends State<AllBooksPage> {
       });
       return;
     }
-    
+
     setState(() {
       _isLoadingSuggestions = true;
       _showSuggestions = true;
     });
-    
+
     try {
       // Get all books and filter locally for suggestions
-      final allBooks = _books.isNotEmpty 
-          ? _books  // Use existing books if already loaded
-          : await _apiService.getBooks();
-          
+      final allBooks =
+          _books.isNotEmpty
+              ? _books // Use existing books if already loaded
+              : await _apiService.getBooks();
+
       // Filter for matches in title or author
-      final suggestions = allBooks.where((book) {
-        final titleMatch = book.title.toLowerCase().contains(query.toLowerCase());
-        final authorMatch = book.author.toLowerCase().contains(query.toLowerCase());
-        return titleMatch || authorMatch;
-      }).toList();
-      
+      final suggestions =
+          allBooks.where((book) {
+            final titleMatch = book.title.toLowerCase().contains(
+              query.toLowerCase(),
+            );
+            final authorMatch = book.author.toLowerCase().contains(
+              query.toLowerCase(),
+            );
+            return titleMatch || authorMatch;
+          }).toList();
+
       // Limit the number of suggestions
       final limitedSuggestions = suggestions.take(5).toList();
-      
+
       if (mounted) {
         setState(() {
           _searchSuggestions = limitedSuggestions;
@@ -306,7 +317,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
       print('Error getting search suggestions: $e');
     }
   }
-  
+
   void _selectSearchSuggestion(Book book) {
     _searchController.text = book.title;
     setState(() {
@@ -316,13 +327,11 @@ class _AllBooksPageState extends State<AllBooksPage> {
     });
     _filterBooks();
     _searchFocusNode.unfocus();
-    
+
     // Navigate to book details
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => BookDetailPage(book: book),
-      ),
+      MaterialPageRoute(builder: (context) => BookDetailPage(book: book)),
     );
   }
 
@@ -333,10 +342,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
         return AlertDialog(
           title: Text(
             'Sort Books',
-            style: TextStyle(
-              color: AppColor.dark,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: AppColor.dark, fontWeight: FontWeight.bold),
           ),
           content: StatefulBuilder(
             builder: (context, setDialogState) {
@@ -353,8 +359,8 @@ class _AllBooksPageState extends State<AllBooksPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ..._sortOptions.entries.map((entry) => 
-                      RadioListTile<String>(
+                    ..._sortOptions.entries.map(
+                      (entry) => RadioListTile<String>(
                         title: Text(entry.value),
                         value: entry.key,
                         groupValue: _sortBy,
@@ -366,7 +372,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
                           });
                         },
                       ),
-                    ).toList(),
+                    ),
                     Divider(),
                     Text(
                       'Direction',
@@ -403,17 +409,14 @@ class _AllBooksPageState extends State<AllBooksPage> {
                   ],
                 ),
               );
-            }
+            },
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text(
-                'Cancel',
-                style: TextStyle(color: AppColor.grey),
-              ),
+              child: Text('Cancel', style: TextStyle(color: AppColor.grey)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -426,10 +429,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                'Apply',
-                style: TextStyle(color: Colors.white),
-              ),
+              child: Text('Apply', style: TextStyle(color: Colors.white)),
             ),
           ],
           shape: RoundedRectangleBorder(
@@ -461,18 +461,25 @@ class _AllBooksPageState extends State<AllBooksPage> {
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
-          title: Text('All Books', style: TextStyle(color: AppColor.dark, fontWeight: FontWeight.bold)),
+          title: Text(
+            'All Books',
+            style: TextStyle(color: AppColor.dark, fontWeight: FontWeight.bold),
+          ),
           iconTheme: IconThemeData(color: AppColor.dark),
           actions: [
             // Toggle view button
             IconButton(
-              icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view, color: AppColor.primary),
+              icon: Icon(
+                _isGridView ? Icons.view_list : Icons.grid_view,
+                color: AppColor.primary,
+              ),
               onPressed: () {
                 setState(() {
                   _isGridView = !_isGridView;
                 });
               },
-              tooltip: _isGridView ? 'Switch to List View' : 'Switch to Grid View',
+              tooltip:
+                  _isGridView ? 'Switch to List View' : 'Switch to Grid View',
             ),
           ],
         ),
@@ -502,16 +509,17 @@ class _AllBooksPageState extends State<AllBooksPage> {
                       hintText: 'Search books, authors...',
                       hintStyle: TextStyle(color: AppColor.grey, fontSize: 14),
                       prefixIcon: Icon(Icons.search, color: AppColor.grey),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: AppColor.grey),
-                              onPressed: () {
-                                _searchController.clear();
-                                _searchBooks('');
-                                _searchFocusNode.unfocus();
-                              },
-                            )
-                          : null,
+                      suffixIcon:
+                          _searchController.text.isNotEmpty
+                              ? IconButton(
+                                icon: Icon(Icons.clear, color: AppColor.grey),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _searchBooks('');
+                                  _searchFocusNode.unfocus();
+                                },
+                              )
+                              : null,
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       fillColor: Colors.white,
@@ -534,9 +542,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
                       _searchFocusNode.unfocus();
                     },
                   ),
-                  
+
                   // Search suggestions
-                  if (_showSuggestions && (_isLoadingSuggestions || _searchSuggestions.isNotEmpty))
+                  if (_showSuggestions &&
+                      (_isLoadingSuggestions || _searchSuggestions.isNotEmpty))
                     Container(
                       constraints: BoxConstraints(maxHeight: 300),
                       width: double.infinity,
@@ -550,74 +559,96 @@ class _AllBooksPageState extends State<AllBooksPage> {
                           top: BorderSide(color: Colors.grey.withOpacity(0.2)),
                         ),
                       ),
-                      child: _isLoadingSuggestions
-                          ? Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Center(
-                                child: SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColor.primary,
+                      child:
+                          _isLoadingSuggestions
+                              ? Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColor.primary,
+                                    ),
                                   ),
                                 ),
+                              )
+                              : ListView.builder(
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                physics: ClampingScrollPhysics(),
+                                itemCount: _searchSuggestions.length,
+                                itemBuilder: (context, index) {
+                                  final suggestion = _searchSuggestions[index];
+                                  return ListTile(
+                                    title: Text(
+                                      suggestion.title,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    subtitle: Text(
+                                      'by ${suggestion.author}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    leading: Container(
+                                      width: 40,
+                                      height: 60,
+                                      clipBehavior: Clip.antiAlias,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(4),
+                                        color: AppColor.primary.withOpacity(
+                                          0.1,
+                                        ),
+                                      ),
+                                      child:
+                                          suggestion.image != null &&
+                                                  suggestion.image!.isNotEmpty
+                                              ? Image.network(
+                                                suggestion.image!,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (
+                                                  context,
+                                                  error,
+                                                  stackTrace,
+                                                ) {
+                                                  return Icon(
+                                                    Icons.book,
+                                                    color: AppColor.primary,
+                                                  );
+                                                },
+                                              )
+                                              : Icon(
+                                                Icons.book,
+                                                color: AppColor.primary,
+                                              ),
+                                    ),
+                                    trailing: Text(
+                                      '\$${suggestion.price.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        color: AppColor.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    onTap:
+                                        () =>
+                                            _selectSearchSuggestion(suggestion),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 4,
+                                    ),
+                                  );
+                                },
                               ),
-                            )
-                          : ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              physics: ClampingScrollPhysics(),
-                              itemCount: _searchSuggestions.length,
-                              itemBuilder: (context, index) {
-                                final suggestion = _searchSuggestions[index];
-                                return ListTile(
-                                  title: Text(
-                                    suggestion.title,
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: Text(
-                                    'by ${suggestion.author}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  leading: Container(
-                                    width: 40,
-                                    height: 60,
-                                    clipBehavior: Clip.antiAlias,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(4),
-                                      color: AppColor.primary.withOpacity(0.1),
-                                    ),
-                                    child: suggestion.image != null && suggestion.image!.isNotEmpty
-                                        ? Image.network(
-                                            suggestion.image!,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (context, error, stackTrace) {
-                                              return Icon(Icons.book, color: AppColor.primary);
-                                            },
-                                          )
-                                        : Icon(Icons.book, color: AppColor.primary),
-                                  ),
-                                  trailing: Text(
-                                    '\$${suggestion.price.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      color: AppColor.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  onTap: () => _selectSearchSuggestion(suggestion),
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                );
-                              },
-                            ),
                     ),
                 ],
               ),
             ),
-            
+
             // Category filters
             if (_isLoadingCategories)
               SizedBox(
@@ -645,24 +676,26 @@ class _AllBooksPageState extends State<AllBooksPage> {
                         ),
                       ),
                     ),
-                    ..._categories.map((category) => 
-                      Padding(
+                    ..._categories.map(
+                      (category) => Padding(
                         padding: const EdgeInsets.only(right: 12.0),
                         child: SizedBox(
                           width: category.name.length > 8 ? 130 : 110,
                           child: CategoryCard(
                             categoryName: category.name,
                             categoryId: category.categoryID,
-                            isSelected: _selectedCategory?.categoryID == category.categoryID,
+                            isSelected:
+                                _selectedCategory?.categoryID ==
+                                category.categoryID,
                             onTap: () => _filterBooksByCategory(category),
                           ),
                         ),
                       ),
-                    ).toList(),
+                    ),
                   ],
                 ),
               ),
-            
+
             // Results count and sort
             if (!_isLoading && _errorMessage.isEmpty)
               Padding(
@@ -681,34 +714,33 @@ class _AllBooksPageState extends State<AllBooksPage> {
                   ],
                 ),
               ),
-            
+
             // Filter Section (expanded/collapsed)
             if (!_isLoading && _errorMessage.isEmpty)
               ExpansionTile(
                 title: Text(
-                  'Filters', 
+                  'Filters',
                   style: TextStyle(
-                    color: AppColor.dark, 
+                    color: AppColor.dark,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),
                 initiallyExpanded: false,
                 tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-                children: [
-                  _buildFilterSection(),
-                ],
+                children: [_buildFilterSection()],
               ),
-            
+
             // Content
             Expanded(
-              child: _errorMessage.isNotEmpty
-                  ? _buildErrorWidget()
-                  : _isLoading
+              child:
+                  _errorMessage.isNotEmpty
+                      ? _buildErrorWidget()
+                      : _isLoading
                       ? _buildLoadingWidget()
                       : _isGridView
-                          ? _buildBooksGrid()
-                          : _buildBooksList(),
+                      ? _buildBooksGrid()
+                      : _buildBooksList(),
             ),
           ],
         ),
@@ -788,17 +820,17 @@ class _AllBooksPageState extends State<AllBooksPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                _searchQuery.isEmpty ? Icons.library_books : Icons.search_off, 
-                size: 80, 
-                color: AppColor.grey.withOpacity(0.5)
+                _searchQuery.isEmpty ? Icons.library_books : Icons.search_off,
+                size: 80,
+                color: AppColor.grey.withOpacity(0.5),
               ),
               const SizedBox(height: 16),
               Text(
-                _searchQuery.isEmpty 
-                  ? (_selectedCategory == null 
-                    ? 'No books available' 
-                    : 'No books in ${_selectedCategory!.name} category')
-                  : 'No books found for "$_searchQuery"',
+                _searchQuery.isEmpty
+                    ? (_selectedCategory == null
+                        ? 'No books available'
+                        : 'No books in ${_selectedCategory!.name} category')
+                    : 'No books found for "$_searchQuery"',
                 style: TextStyle(
                   color: AppColor.grey,
                   fontSize: 16,
@@ -831,7 +863,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
     }
 
     return RefreshIndicator(
-      onRefresh: _selectedCategory == null ? _fetchSortedBooks : () => _filterBooksByCategory(_selectedCategory),
+      onRefresh:
+          _selectedCategory == null
+              ? _fetchSortedBooks
+              : () => _filterBooksByCategory(_selectedCategory),
       color: AppColor.primary,
       child: GridView.builder(
         controller: _scrollController,
@@ -848,9 +883,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
           return BookCard(
             title: book.title,
             author: book.author,
-            coverImage: book.image != null && book.image!.isNotEmpty 
-              ? book.image! 
-              : null,
+            coverImage:
+                book.image != null && book.image!.isNotEmpty
+                    ? book.image!
+                    : null,
             price: book.price,
             rating: 4.5,
             bookData: book,
@@ -866,7 +902,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
     }
 
     return RefreshIndicator(
-      onRefresh: _selectedCategory == null ? _fetchSortedBooks : () => _filterBooksByCategory(_selectedCategory),
+      onRefresh:
+          _selectedCategory == null
+              ? _fetchSortedBooks
+              : () => _filterBooksByCategory(_selectedCategory),
       color: AppColor.primary,
       child: ListView.separated(
         controller: _scrollController,
@@ -888,7 +927,8 @@ class _AllBooksPageState extends State<AllBooksPage> {
       categoryName = book.category!['Name'];
     } else {
       // Try to find category from our list
-      final category = _categories.where((c) => c.categoryID == book.categoryID).toList();
+      final category =
+          _categories.where((c) => c.categoryID == book.categoryID).toList();
       if (category.isNotEmpty) {
         categoryName = category.first.name;
       } else {
@@ -930,17 +970,18 @@ class _AllBooksPageState extends State<AllBooksPage> {
                 // Book cover image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: book.image != null && book.image!.isNotEmpty
-                    ? Image.network(
-                        book.image!,
-                        width: 80,
-                        height: 110,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholderBookCover(book);
-                        },
-                      )
-                    : _buildPlaceholderBookCover(book),
+                  child:
+                      book.image != null && book.image!.isNotEmpty
+                          ? Image.network(
+                            book.image!,
+                            width: 80,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildPlaceholderBookCover(book);
+                            },
+                          )
+                          : _buildPlaceholderBookCover(book),
                 ),
                 const SizedBox(width: 16),
                 // Book details
@@ -961,10 +1002,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
                       const SizedBox(height: 4),
                       Text(
                         'by ${book.author}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColor.grey,
-                        ),
+                        style: TextStyle(fontSize: 14, color: AppColor.grey),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -983,7 +1021,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
                           ),
                           const SizedBox(width: 16),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColor.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
@@ -1053,16 +1094,14 @@ class _AllBooksPageState extends State<AllBooksPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Categories filter section
-            if (_categories.isNotEmpty)
-              _buildCategoriesFilter(),
-            
+            if (_categories.isNotEmpty) _buildCategoriesFilter(),
+
             // Sorting section
             _buildSortingSection(),
-            
+
             // Price range filter
-            if (_isPriceRangeLoaded)
-              _buildPriceRangeFilter(),
-            
+            if (_isPriceRangeLoaded) _buildPriceRangeFilter(),
+
             const SizedBox(height: 16),
           ],
         ),
@@ -1077,10 +1116,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Price Range',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Price Range', style: Theme.of(context).textTheme.titleMedium),
             Switch(
               value: _isPriceFilterActive,
               onChanged: (value) {
@@ -1101,8 +1137,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
         const SizedBox(height: 8),
         Row(
           children: [
-            Text('\$${_priceRange.start.toStringAsFixed(2)}', 
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '\$${_priceRange.start.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             Expanded(
               child: RangeSlider(
                 values: _priceRange,
@@ -1125,8 +1163,10 @@ class _AllBooksPageState extends State<AllBooksPage> {
                 },
               ),
             ),
-            Text('\$${_priceRange.end.toStringAsFixed(2)}', 
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              '\$${_priceRange.end.toStringAsFixed(2)}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -1138,10 +1178,7 @@ class _AllBooksPageState extends State<AllBooksPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Categories',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('Categories', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         SizedBox(
           height: 40,
@@ -1158,31 +1195,40 @@ class _AllBooksPageState extends State<AllBooksPage> {
                   backgroundColor: Colors.white,
                   selectedColor: AppColor.primary.withOpacity(0.2),
                   labelStyle: TextStyle(
-                    color: _selectedCategory == null ? AppColor.primary : AppColor.grey,
-                    fontWeight: _selectedCategory == null ? FontWeight.bold : FontWeight.normal,
+                    color:
+                        _selectedCategory == null
+                            ? AppColor.primary
+                            : AppColor.grey,
+                    fontWeight:
+                        _selectedCategory == null
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                   ),
                 ),
               ),
-              ..._categories.map((category) => 
-                Padding(
+              ..._categories.map(
+                (category) => Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: FilterChip(
                     label: Text(category.name),
-                    selected: _selectedCategory?.categoryID == category.categoryID,
+                    selected:
+                        _selectedCategory?.categoryID == category.categoryID,
                     onSelected: (_) => _filterBooksByCategory(category),
                     backgroundColor: Colors.white,
                     selectedColor: AppColor.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: _selectedCategory?.categoryID == category.categoryID 
-                          ? AppColor.primary 
-                          : AppColor.grey,
-                      fontWeight: _selectedCategory?.categoryID == category.categoryID 
-                          ? FontWeight.bold 
-                          : FontWeight.normal,
+                      color:
+                          _selectedCategory?.categoryID == category.categoryID
+                              ? AppColor.primary
+                              : AppColor.grey,
+                      fontWeight:
+                          _selectedCategory?.categoryID == category.categoryID
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                     ),
                   ),
                 ),
-              ).toList(),
+              ),
             ],
           ),
         ),
@@ -1195,24 +1241,24 @@ class _AllBooksPageState extends State<AllBooksPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Sort By',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('Sort By', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           children: [
-            ..._sortOptions.entries.map((entry) => 
-              ChoiceChip(
-                label: Text('${entry.value} ${_sortBy == entry.key ? (_sortDirection == 'asc' ? '↑' : '↓') : ''}'),
+            ..._sortOptions.entries.map(
+              (entry) => ChoiceChip(
+                label: Text(
+                  '${entry.value} ${_sortBy == entry.key ? (_sortDirection == 'asc' ? '↑' : '↓') : ''}',
+                ),
                 selected: _sortBy == entry.key,
                 onSelected: (selected) {
                   if (selected) {
                     setState(() {
                       if (_sortBy == entry.key) {
                         // Toggle direction if already selected
-                        _sortDirection = _sortDirection == 'asc' ? 'desc' : 'asc';
+                        _sortDirection =
+                            _sortDirection == 'asc' ? 'desc' : 'asc';
                       } else {
                         _sortBy = entry.key;
                       }
@@ -1223,15 +1269,19 @@ class _AllBooksPageState extends State<AllBooksPage> {
                 backgroundColor: Colors.white,
                 selectedColor: AppColor.primary.withOpacity(0.2),
                 labelStyle: TextStyle(
-                  color: _sortBy == entry.key ? AppColor.primary : AppColor.grey,
-                  fontWeight: _sortBy == entry.key ? FontWeight.bold : FontWeight.normal,
+                  color:
+                      _sortBy == entry.key ? AppColor.primary : AppColor.grey,
+                  fontWeight:
+                      _sortBy == entry.key
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                 ),
               ),
-            ).toList(),
+            ),
           ],
         ),
         const SizedBox(height: 16),
       ],
     );
   }
-} 
+}

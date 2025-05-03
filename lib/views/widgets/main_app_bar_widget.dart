@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutterbookstore/constant/app_color.dart';
-import 'package:flutterbookstore/services/cart_service.dart';
 import 'package:flutterbookstore/views/screens/cart_page.dart';
 import 'package:flutterbookstore/views/widgets/app_logo.dart';
 
@@ -9,10 +8,10 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showBackButton;
 
   const MainAppBar({
-    Key? key,
+    super.key,
     this.cartValue = 0,
     this.showBackButton = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +27,11 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
                 },
               )
               : null,
-      title: Container(
+      title: SizedBox(
         height: 40,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            AppLogo(height: 30),
-          ],
+          children: [AppLogo(height: 30)],
         ),
       ),
       actions: [
@@ -47,14 +44,14 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
               IconButton(
                 onPressed: () {
                   // Navigate to cart page
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => CartPage()),
-                  ).then((_) {
-                    // Force a rebuild to update cart count if needed
-                    if (context is StatefulElement) {
-                      (context.state as State).setState(() {});
-                    }
-                  });
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) => CartPage()))
+                      .then((_) {
+                        // Force a rebuild to update cart count if needed
+                        if (context is StatefulElement) {
+                          (context.state).setState(() {});
+                        }
+                      });
                 },
                 icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark),
               ),

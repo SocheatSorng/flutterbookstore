@@ -13,7 +13,7 @@ import 'package:flutterbookstore/services/api_service.dart';
 class BookDetailPage extends StatefulWidget {
   final Book book;
 
-  const BookDetailPage({Key? key, required this.book}) : super(key: key);
+  const BookDetailPage({super.key, required this.book});
 
   @override
   _BookDetailPageState createState() => _BookDetailPageState();
@@ -70,7 +70,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
       // This would normally be an API call to get reviews
       // For demonstration, we'll create mock reviews after a short delay
       await Future.delayed(Duration(seconds: 1));
-      
+
       if (!mounted) return;
 
       // Mock reviews data
@@ -80,7 +80,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           bookId: widget.book.bookID,
           customerName: "John Doe",
           rating: 5,
-          content: "This book exceeded my expectations! The storytelling is captivating and the characters are well-developed.",
+          content:
+              "This book exceeded my expectations! The storytelling is captivating and the characters are well-developed.",
           createdAt: "2023-09-15",
         ),
         BookReview(
@@ -88,7 +89,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           bookId: widget.book.bookID,
           customerName: "Jane Smith",
           rating: 4,
-          content: "A great read overall, though I found some parts to be a bit slow. Still would recommend it!",
+          content:
+              "A great read overall, though I found some parts to be a bit slow. Still would recommend it!",
           createdAt: "2023-08-28",
         ),
         BookReview(
@@ -96,7 +98,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           bookId: widget.book.bookID,
           customerName: "David Wilson",
           rating: 5,
-          content: "Absolutely loved this book. Couldn't put it down once I started reading!",
+          content:
+              "Absolutely loved this book. Couldn't put it down once I started reading!",
           createdAt: "2023-07-10",
         ),
       ];
@@ -224,10 +227,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   MaterialPageRoute(builder: (context) => LoginPage()),
                 );
               },
-              child: Text('Login'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColor.primary,
               ),
+              child: Text('Login'),
             ),
           ],
         );
@@ -237,10 +240,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
   String generateDescription(String title) {
     // Generate a fake description based on the book title
-    return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. ${title} is a captivating book that takes readers on a journey through imagination and knowledge. "
+    return "Lorem ipsum dolor sit amet, consectetur adipiscing elit. $title is a captivating book that takes readers on a journey through imagination and knowledge. "
         "The author has masterfully crafted a narrative that is both engaging and thought-provoking. "
         "This book explores themes of adventure, discovery, and personal growth, making it a must-read for all book lovers. "
-        "With its rich character development and intricate plot, ${title} stands as a testament to the power of storytelling in modern literature.";
+        "With its rich character development and intricate plot, $title stands as a testament to the power of storytelling in modern literature.";
   }
 
   @override
@@ -296,7 +299,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       MaterialPageRoute(builder: (context) => CartPage()),
                     );
                   },
-                  icon: Icon(Icons.shopping_cart_outlined, color: AppColor.dark, size: 20),
+                  icon: Icon(
+                    Icons.shopping_cart_outlined,
+                    color: AppColor.dark,
+                    size: 20,
+                  ),
                 ),
                 if (CartService.itemCount > 0)
                   Positioned(
@@ -315,10 +322,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           ),
                         ],
                       ),
-                      constraints: BoxConstraints(
-                        minWidth: 14,
-                        minHeight: 14,
-                      ),
+                      constraints: BoxConstraints(minWidth: 14, minHeight: 14),
                       child: Text(
                         '${CartService.itemCount}',
                         style: TextStyle(
@@ -365,6 +369,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
               margin: EdgeInsets.only(right: 16),
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _addToCart,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColor.secondary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: EdgeInsets.zero,
+                  elevation: 2,
+                ),
                 child:
                     _isLoading
                         ? SizedBox(
@@ -379,14 +391,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                           Icons.shopping_cart_outlined,
                           color: Colors.white,
                         ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColor.secondary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: EdgeInsets.zero,
-                  elevation: 2,
-                ),
               ),
             ),
             // Buy now button
@@ -412,6 +416,14 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             MaterialPageRoute(builder: (context) => CartPage()),
                           );
                         },
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: AppColor.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 2,
+                ),
                 child:
                     _isLoading
                         ? SizedBox(
@@ -430,14 +442,6 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             fontSize: 14,
                           ),
                         ),
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  backgroundColor: AppColor.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 2,
-                ),
               ),
             ),
           ],
@@ -463,20 +467,52 @@ class _BookDetailPageState extends State<BookDetailPage> {
                 Stack(
                   children: [
                     // Book Image
-                    Container(
+                    SizedBox(
                       height: 380,
                       width: double.infinity,
-                      child: widget.book.image != null && widget.book.image!.isNotEmpty
-                        ? Image.network(
-                            widget.book.image!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
+                      child:
+                          widget.book.image != null &&
+                                  widget.book.image!.isNotEmpty
+                              ? Image.network(
+                                widget.book.image!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: AppColor.primary.withOpacity(0.1),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.book,
+                                          size: 80,
+                                          color: AppColor.primary,
+                                        ),
+                                        SizedBox(height: 16),
+                                        Text(
+                                          widget.book.title,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColor.dark,
+                                            fontSize: 18,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )
+                              : Container(
                                 color: AppColor.primary.withOpacity(0.1),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.book, size: 80, color: AppColor.primary),
+                                    Icon(
+                                      Icons.book,
+                                      size: 80,
+                                      color: AppColor.primary,
+                                    ),
                                     SizedBox(height: 16),
                                     Text(
                                       widget.book.title,
@@ -489,28 +525,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                     ),
                                   ],
                                 ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: AppColor.primary.withOpacity(0.1),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.book, size: 80, color: AppColor.primary),
-                                SizedBox(height: 16),
-                                Text(
-                                  widget.book.title,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColor.dark,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                              ),
                     ),
                     // Gradient overlay
                     Positioned(
@@ -565,7 +580,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     ),
                   ],
                 ),
-                
+
                 // Book Info
                 AnimatedContainer(
                   duration: Duration(milliseconds: 500),
@@ -615,7 +630,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                         child: Text(
                           'by ${widget.book.author}',
                           style: TextStyle(
-                            fontSize: 16, 
+                            fontSize: 16,
                             color: AppColor.grey,
                             fontStyle: FontStyle.italic,
                           ),
@@ -650,15 +665,25 @@ class _BookDetailPageState extends State<BookDetailPage> {
                             ),
                             // Rating
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.amber.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: Colors.amber.withOpacity(0.5), width: 0.5),
+                                border: Border.all(
+                                  color: Colors.amber.withOpacity(0.5),
+                                  width: 0.5,
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.star, color: Colors.amber, size: 16),
+                                  Icon(
+                                    Icons.star,
+                                    color: Colors.amber,
+                                    size: 16,
+                                  ),
                                   SizedBox(width: 4),
                                   Text(
                                     '4.5',
@@ -672,7 +697,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                                   Text(
                                     '(120)',
                                     style: TextStyle(
-                                      fontSize: 12, 
+                                      fontSize: 12,
                                       color: AppColor.grey,
                                     ),
                                   ),
@@ -769,7 +794,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   child: Text(
                     'In Stock: ${widget.book.stockQuantity}',
                     style: TextStyle(
-                      fontSize: 12, 
+                      fontSize: 12,
                       color: AppColor.primary,
                       fontWeight: FontWeight.w500,
                     ),
@@ -784,10 +809,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
 
           // Book Details Section
           _buildDetailsSection(),
-          
+
           // Reviews Section
           _buildReviewsSection(),
-          
+
           SizedBox(height: 30),
         ],
       ),
@@ -815,7 +840,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.description_outlined, color: AppColor.primary, size: 20),
+              Icon(
+                Icons.description_outlined,
+                color: AppColor.primary,
+                size: 20,
+              ),
               SizedBox(width: 10),
               Text(
                 'Book Description',
@@ -861,7 +890,8 @@ class _BookDetailPageState extends State<BookDetailPage> {
           else
             Text(
               // Use the actual description from API if available
-              _bookDetail?.description != null && _bookDetail!.description.isNotEmpty
+              _bookDetail?.description != null &&
+                      _bookDetail!.description.isNotEmpty
                   ? _bookDetail!.description
                   : generateDescription(widget.book.title),
               style: TextStyle(
@@ -909,18 +939,50 @@ class _BookDetailPageState extends State<BookDetailPage> {
             ],
           ),
           SizedBox(height: 16),
-          _buildDetailRow(
-            'Category',
-            'Category ${widget.book.categoryID}',
-          ),
+          _buildDetailRow('Category', 'Category ${widget.book.categoryID}'),
           if (_bookDetail != null) ...[
-            _buildDetailRow('Publisher', _bookDetail!.publisher.isNotEmpty ? _bookDetail!.publisher : 'Unknown'),
-            _buildDetailRow('Language', _bookDetail!.language.isNotEmpty ? _bookDetail!.language : 'English'),
-            _buildDetailRow('Pages', _bookDetail!.pageCount > 0 ? _bookDetail!.pageCount.toString() : '${100 + (widget.book.bookID * 15)}'),
-            _buildDetailRow('ISBN', _bookDetail!.isbn.isNotEmpty ? _bookDetail!.isbn : '978-${1000000 + widget.book.bookID}'),
-            _buildDetailRow('Format', _bookDetail!.format.isNotEmpty ? _bookDetail!.format : 'Paperback'),
-            _buildDetailRow('Dimensions', _bookDetail!.dimensions.isNotEmpty ? _bookDetail!.dimensions : 'Standard'),
-            _buildDetailRow('Publication Date', _bookDetail!.publicationDate.isNotEmpty ? _bookDetail!.publicationDate : widget.book.createdAt),
+            _buildDetailRow(
+              'Publisher',
+              _bookDetail!.publisher.isNotEmpty
+                  ? _bookDetail!.publisher
+                  : 'Unknown',
+            ),
+            _buildDetailRow(
+              'Language',
+              _bookDetail!.language.isNotEmpty
+                  ? _bookDetail!.language
+                  : 'English',
+            ),
+            _buildDetailRow(
+              'Pages',
+              _bookDetail!.pageCount > 0
+                  ? _bookDetail!.pageCount.toString()
+                  : '${100 + (widget.book.bookID * 15)}',
+            ),
+            _buildDetailRow(
+              'ISBN',
+              _bookDetail!.isbn.isNotEmpty
+                  ? _bookDetail!.isbn
+                  : '978-${1000000 + widget.book.bookID}',
+            ),
+            _buildDetailRow(
+              'Format',
+              _bookDetail!.format.isNotEmpty
+                  ? _bookDetail!.format
+                  : 'Paperback',
+            ),
+            _buildDetailRow(
+              'Dimensions',
+              _bookDetail!.dimensions.isNotEmpty
+                  ? _bookDetail!.dimensions
+                  : 'Standard',
+            ),
+            _buildDetailRow(
+              'Publication Date',
+              _bookDetail!.publicationDate.isNotEmpty
+                  ? _bookDetail!.publicationDate
+                  : widget.book.createdAt,
+            ),
           ] else ...[
             _buildDetailRow('Published', widget.book.createdAt),
             _buildDetailRow('Language', 'English'),
@@ -939,14 +1001,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          SizedBox(
             width: 100,
             child: Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColor.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: AppColor.grey),
             ),
           ),
           Expanded(
@@ -1005,7 +1064,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   onPressed: () {
                     // Navigate to all reviews
                   },
-                  icon: Icon(Icons.arrow_forward, size: 16, color: AppColor.primary),
+                  icon: Icon(
+                    Icons.arrow_forward,
+                    size: 16,
+                    color: AppColor.primary,
+                  ),
                   label: Text(
                     'See All',
                     style: TextStyle(
@@ -1025,7 +1088,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     height: 40,
                     width: 40,
                     child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColor.primary),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColor.primary,
+                      ),
                       strokeWidth: 2,
                     ),
                   ),
@@ -1053,7 +1118,11 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     ),
                     child: Column(
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red[400], size: 48),
+                        Icon(
+                          Icons.error_outline,
+                          color: Colors.red[400],
+                          size: 48,
+                        ),
                         SizedBox(height: 12),
                         Text(
                           'Failed to load reviews',
@@ -1077,13 +1146,22 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     onPressed: _loadBookReviews,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColor.primary,
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     icon: Icon(Icons.refresh, color: Colors.white, size: 16),
-                    label: Text('Retry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    label: Text(
+                      'Retry',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -1116,10 +1194,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     SizedBox(height: 8),
                     Text(
                       'Be the first to review this book!',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 20),
@@ -1129,7 +1204,10 @@ class _BookDetailPageState extends State<BookDetailPage> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColor.primary,
-                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1149,9 +1227,13 @@ class _BookDetailPageState extends State<BookDetailPage> {
             )
           else
             Column(
-              children: _bookReviews!.take(3).map((review) => _buildReviewItem(review)).toList(),
+              children:
+                  _bookReviews!
+                      .take(3)
+                      .map((review) => _buildReviewItem(review))
+                      .toList(),
             ),
-          
+
           if (_bookReviews != null && _bookReviews!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
@@ -1230,7 +1312,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   radius: 22,
                   backgroundColor: Colors.transparent,
                   child: Text(
-                    review.customerName.isNotEmpty ? review.customerName[0].toUpperCase() : 'U',
+                    review.customerName.isNotEmpty
+                        ? review.customerName[0].toUpperCase()
+                        : 'U',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1245,7 +1329,9 @@ class _BookDetailPageState extends State<BookDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review.customerName.isNotEmpty ? review.customerName : 'Unknown User',
+                      review.customerName.isNotEmpty
+                          ? review.customerName
+                          : 'Unknown User',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -1255,10 +1341,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
                     SizedBox(height: 2),
                     Text(
                       review.createdAt,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColor.grey,
-                      ),
+                      style: TextStyle(fontSize: 12, color: AppColor.grey),
                     ),
                   ],
                 ),
@@ -1266,35 +1349,34 @@ class _BookDetailPageState extends State<BookDetailPage> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: review.rating >= 4
-                      ? Colors.green[50]
-                      : review.rating >= 3
+                  color:
+                      review.rating >= 4
+                          ? Colors.green[50]
+                          : review.rating >= 3
                           ? Colors.amber[50]
                           : Colors.red[50],
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: review.rating >= 4
-                        ? Colors.green[200]!
-                        : review.rating >= 3
+                    color:
+                        review.rating >= 4
+                            ? Colors.green[200]!
+                            : review.rating >= 3
                             ? Colors.amber[200]!
                             : Colors.red[200]!,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
+                    Icon(Icons.star, color: Colors.amber, size: 16),
                     SizedBox(width: 4),
                     Text(
                       '${review.rating}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: review.rating >= 4
-                            ? Colors.green[700]
-                            : review.rating >= 3
+                        color:
+                            review.rating >= 4
+                                ? Colors.green[700]
+                                : review.rating >= 3
                                 ? Colors.amber[700]
                                 : Colors.red[700],
                       ),

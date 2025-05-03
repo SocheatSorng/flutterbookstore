@@ -5,7 +5,6 @@ import 'package:flutterbookstore/models/book.dart';
 import 'package:flutterbookstore/models/category.dart';
 import 'package:flutterbookstore/services/api_service.dart';
 import 'package:flutterbookstore/services/cart_service.dart';
-import 'package:flutterbookstore/views/screens/login_page.dart';
 import 'package:flutterbookstore/views/screens/cart_page.dart';
 import 'package:flutterbookstore/views/screens/profile_page.dart';
 import 'package:flutterbookstore/views/screens/all_books_page.dart';
@@ -13,7 +12,7 @@ import 'package:flutterbookstore/views/widgets/book_card.dart';
 import 'package:flutterbookstore/views/widgets/category_card.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -569,7 +568,7 @@ class _HomePageState extends State<HomePage> {
             )
           else if (_searchQuery.isNotEmpty) ...[
             _buildBooksSection(
-              'Search Results for "${_searchQuery}"',
+              'Search Results for "$_searchQuery"',
               _filteredBooks,
             ),
             if (_filteredBooks.isEmpty)
@@ -581,7 +580,7 @@ class _HomePageState extends State<HomePage> {
                       Icon(Icons.search_off, size: 64, color: AppColor.grey),
                       const SizedBox(height: 16),
                       Text(
-                        'No books found for "${_searchQuery}"',
+                        'No books found for "$_searchQuery"',
                         style: TextStyle(
                           color: AppColor.grey,
                           fontWeight: FontWeight.w500,
