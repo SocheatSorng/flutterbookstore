@@ -70,30 +70,33 @@ class AuthService {
   Future<void> _fetchCsrfToken() async {
     try {
       final response = await http.get(
-        Uri.parse('${AppConfig.apiBaseUrl}/sanctum/csrf-cookie'),
-        headers: {'Accept': 'application/json'},
+        Uri.parse('${AppConfig.apiBaseUrl}/csrf-token'),
+        headers: {'Accept': 'application/json', 'X-API-Key': AppConfig.apiKey},
       );
 
       print('CSRF token request status: ${response.statusCode}');
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        // CSRF token is usually in the cookies
-        if (response.headers.containsKey('set-cookie')) {
-          final cookies = response.headers['set-cookie']!;
-          print('Cookies received: $cookies');
+        // Parse the JSON response to get the token
+        try {
+          final data = json.decode(response.body);
+          print('CSRF response: $data');
 
-          // Extract XSRF-TOKEN from cookies
-          final xsrfCookie = cookies
-              .split(';')
-              .firstWhere(
-                (cookie) => cookie.trim().startsWith('XSRF-TOKEN='),
-                orElse: () => '',
-              );
-
-          if (xsrfCookie.isNotEmpty) {
-            _csrfToken = Uri.decodeComponent(xsrfCookie.split('=')[1].trim());
-            print('CSRF Token obtained: $_csrfToken');
+          if (data != null &&
+              data is Map<String, dynamic> &&
+              data.containsKey('token')) {
+            _csrfToken = data['token'];
+            if (_csrfToken != null && _csrfToken!.isNotEmpty) {
+              print('CSRF Token obtained: $_csrfToken');
+            } else {
+              print('CSRF Token is empty or null');
+            }
+          } else {
+            print('No token field in CSRF response');
           }
+        } catch (e) {
+          print('Error parsing CSRF token response: $e');
+          print('Response body: ${response.body}');
         }
       }
     } catch (e) {

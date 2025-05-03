@@ -388,9 +388,11 @@ class OrderService {
         },
       };
 
-      // Send update payment request to API
+      // Send update payment request to API with paypal_return flag
       final response = await http.post(
-        Uri.parse('${AppConfig.apiBaseUrl}/orders/$orderId/payment'),
+        Uri.parse(
+          '${AppConfig.apiBaseUrl}/orders/$orderId/payment?paypal_return=true',
+        ),
         headers: _authService.authHeaders,
         body: json.encode(paymentData),
       );

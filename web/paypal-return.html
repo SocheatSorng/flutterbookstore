@@ -1,93 +1,393 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayPal Payment Successful</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      text-align: center;
-      padding: 2rem;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-    }
-    h1 {
-      color: #2196F3;
-    }
-    .success-icon {
-      color: #4CAF50;
-      font-size: 4rem;
-      margin-bottom: 1rem;
-    }
-    .redirect-text {
-      margin-top: 1.5rem;
-      color: #666;
-    }
-    .spinner {
-      border: 4px solid rgba(0, 0, 0, 0.1);
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border-left-color: #2196F3;
-      animation: spin 1s linear infinite;
-      margin: 1rem auto;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="success-icon">✓</div>
-    <h1>Payment Successful!</h1>
-    <p>Your PayPal payment has been processed successfully.</p>
-    <div class="spinner"></div>
-    <p class="redirect-text">Returning to the bookstore app...</p>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PayPal Payment Successful</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f5f5f5;
+      }
+      .container {
+        text-align: center;
+        padding: 2rem;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+      }
+      h1 {
+        color: #2196f3;
+      }
+      .success-icon {
+        color: #4caf50;
+        font-size: 4rem;
+        margin-bottom: 1rem;
+      }
+      .redirect-text {
+        margin-top: 1.5rem;
+        color: #666;
+      }
+      .spinner {
+        border: 4px solid rgba(0, 0, 0, 0.1);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border-left-color: #2196f3;
+        animation: spin 1s linear infinite;
+        margin: 1rem auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .status {
+        font-size: 14px;
+        color: #666;
+        margin-top: 16px;
+        padding: 8px;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        max-height: 100px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="paypalContainer">
+      <div class="success-icon">✓</div>
+      <h1>Payment Successful!</h1>
+      <p>Your PayPal payment has been processed successfully.</p>
+      <div class="spinner"></div>
+      <p class="redirect-text">Processing payment notification...</p>
+      <div id="status" class="status">Initializing payment process...</div>
+    </div>
 
-  <script>
-    // Extract URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const paymentId = urlParams.get('paymentId');
-    const token = urlParams.get('token');
-    const PayerID = urlParams.get('PayerID');
+    <script>
+      // Status logging element
+      const statusEl = document.getElementById("status");
 
-    // Log the parameters for debugging
-    console.log('PayPal return parameters:', { paymentId, token, PayerID });
+      // Configuration
+      const API_CONFIG = {
+        // Default API host - will be overridden if available in localStorage
+        apiHost: "http://192.168.1.4:8000",
+        apiKey: "3EaR78ULtCRLyykSeCENE7E3WStGHqKrFiSppycQwcNj2cLvolcknKemzjnO",
+      };
 
-    // Construct the return URL with parameters
-    const returnUrl = `flutterbookstore://paypalpay/?paymentId=${paymentId}&token=${token}&PayerID=${PayerID}`;
+      // Try to load config from localStorage if available
+      try {
+        if (localStorage.getItem("apiBaseUrl")) {
+          API_CONFIG.apiHost = localStorage
+            .getItem("apiBaseUrl")
+            .replace("/api", "");
+          logStatus(`Loaded API host from localStorage: ${API_CONFIG.apiHost}`);
+        }
 
-    // Store the return URL and parameters separately in localStorage
-    localStorage.setItem('paypalReturnData', returnUrl);
-    localStorage.setItem('paypalPaymentId', paymentId || '');
-    localStorage.setItem('paypalPayerId', PayerID || '');
-    localStorage.setItem('paypalToken', token || '');
-    localStorage.setItem('paypalPaymentTimestamp', Date.now().toString());
+        if (localStorage.getItem("apiKey")) {
+          API_CONFIG.apiKey = localStorage.getItem("apiKey");
+        }
+      } catch (e) {
+        console.error("Error loading API config:", e);
+      }
 
-    // Update the UI to show we're processing
-    document.querySelector('.redirect-text').textContent = 'Processing payment and returning to the bookstore app...';
+      // Function to add a status message
+      function logStatus(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        statusEl.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        console.log(`[${timestamp}] ${message}`);
+        // Auto-scroll to bottom
+        statusEl.scrollTop = statusEl.scrollHeight;
+      }
 
-    // Redirect back to the main app with parameters in the URL
-    // This helps in case localStorage doesn't work properly
-    setTimeout(() => {
-      // Try to redirect with parameters in the URL hash
-      // This won't trigger a page reload but will be accessible to the app
-      window.location.href = `/?paypal_return=true#paymentId=${paymentId}&PayerID=${PayerID}&token=${token}`;
-    }, 2000);
-  </script>
-</body>
+      // Track processed payments in localStorage
+      function isPaymentProcessed(paymentId) {
+        if (!paymentId) return false;
+
+        try {
+          const processedPayments = JSON.parse(
+            localStorage.getItem("processedPayPalPayments") || "[]"
+          );
+          return processedPayments.includes(paymentId);
+        } catch (e) {
+          console.error("Error checking processed payments:", e);
+          return false;
+        }
+      }
+
+      function markPaymentAsProcessed(paymentId) {
+        if (!paymentId) return;
+
+        try {
+          const processedPayments = JSON.parse(
+            localStorage.getItem("processedPayPalPayments") || "[]"
+          );
+          if (!processedPayments.includes(paymentId)) {
+            processedPayments.push(paymentId);
+            localStorage.setItem(
+              "processedPayPalPayments",
+              JSON.stringify(processedPayments)
+            );
+            logStatus(`Marked payment ${paymentId} as processed`);
+          }
+        } catch (e) {
+          console.error("Error marking payment as processed:", e);
+        }
+      }
+
+      // Extract URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      let paymentId = urlParams.get("paymentId");
+      let token = urlParams.get("token");
+      let PayerID = urlParams.get("PayerID");
+
+      // Extract order ID from URL hash if available
+      let orderId = "";
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1)
+        );
+        orderId = hashParams.get("order_id") || "";
+
+        // It seems the order_id parameter might contain other URL parameters
+        // Check if it has embedded query parameters
+        if (orderId && orderId.includes("?")) {
+          try {
+            // Split by ? and extract embedded parameters
+            const parts = orderId.split("?");
+            orderId = parts[0]; // Keep only the actual order ID
+
+            // Extract embedded parameters if payment ID not already set
+            if (!paymentId && parts.length > 1) {
+              const embeddedParams = new URLSearchParams(parts[1]);
+              paymentId = embeddedParams.get("paymentId") || paymentId;
+              token = embeddedParams.get("token") || token;
+              PayerID = embeddedParams.get("PayerID") || PayerID;
+              logStatus(
+                `Extracted embedded parameters: paymentId=${paymentId}, PayerID=${PayerID}`
+              );
+            }
+          } catch (e) {
+            console.error("Error parsing embedded parameters:", e);
+          }
+        }
+      }
+
+      // If order ID is not in the URL, try to get it from localStorage
+      if (!orderId) {
+        try {
+          orderId = localStorage.getItem("currentOrderId") || "";
+          if (orderId) {
+            logStatus(`Retrieved order ID from localStorage: ${orderId}`);
+          }
+        } catch (e) {
+          console.error("Error getting order ID from localStorage:", e);
+        }
+      }
+
+      // Check for PayPal parameters in the full URL in case they're not properly parsed
+      const fullUrl = window.location.href;
+      if (!paymentId && fullUrl.includes("paymentId=")) {
+        try {
+          const paymentIdMatch = fullUrl.match(/paymentId=([^&]+)/);
+          if (paymentIdMatch && paymentIdMatch[1]) {
+            paymentId = paymentIdMatch[1];
+            logStatus(`Extracted payment ID from full URL: ${paymentId}`);
+          }
+
+          const payerIdMatch = fullUrl.match(/PayerID=([^&]+)/);
+          if (payerIdMatch && payerIdMatch[1]) {
+            PayerID = payerIdMatch[1];
+            logStatus(`Extracted payer ID from full URL: ${PayerID}`);
+          }
+
+          const tokenMatch = fullUrl.match(/token=([^&]+)/);
+          if (tokenMatch && tokenMatch[1]) {
+            token = tokenMatch[1];
+          }
+        } catch (e) {
+          console.error("Error extracting parameters from full URL:", e);
+        }
+      }
+
+      // Log the parameters for debugging
+      logStatus(
+        `PayPal parameters: payment ID=${paymentId}, PayerID=${PayerID}, order ID=${orderId}`
+      );
+
+      // Check if this payment has already been processed
+      if (paymentId && isPaymentProcessed(paymentId)) {
+        logStatus(`This payment was already processed. Skipping webhook call.`);
+        document.querySelector(".redirect-text").textContent =
+          "Payment already processed. Returning to bookstore...";
+      } else {
+        // Store the parameters in the DOM for access by the Flutter app
+        const container = document.getElementById("paypalContainer");
+        container.setAttribute("data-payment-id", paymentId || "");
+        container.setAttribute("data-payer-id", PayerID || "");
+        container.setAttribute("data-token", token || "");
+        container.setAttribute("data-order-id", orderId || "");
+
+        // Construct the return URL with parameters
+        const returnUrl = `flutterbookstore://paypalpay/?paymentId=${paymentId}&token=${token}&PayerID=${PayerID}&order_id=${orderId}`;
+
+        // Store the return URL and parameters separately in localStorage
+        localStorage.setItem("paypalReturnData", returnUrl);
+        localStorage.setItem("paypalPaymentId", paymentId || "");
+        localStorage.setItem("paypalPayerId", PayerID || "");
+        localStorage.setItem("paypalToken", token || "");
+        localStorage.setItem("paypalOrderId", orderId || "");
+        localStorage.setItem("paypalPaymentTimestamp", Date.now().toString());
+      }
+
+      // Function to call the webhook directly
+      async function callWebhook() {
+        try {
+          // Handle case where we have order ID but no payment ID
+          // This is still a valid scenario to notify the server
+          if (!paymentId && orderId) {
+            logStatus(
+              "No payment ID found, but we have an order ID. Proceeding with webhook call."
+            );
+          } else if (!paymentId) {
+            logStatus(
+              "Error: No payment ID found in URL and no order ID available. Cannot call webhook."
+            );
+            return { success: false, message: "No payment ID or order ID" };
+          }
+
+          // Check if already processed
+          if (paymentId && isPaymentProcessed(paymentId)) {
+            logStatus("Payment already processed, skipping webhook call");
+            return { success: true, message: "Payment already processed" };
+          }
+
+          // Try to get order ID again if it's still empty
+          if (!orderId) {
+            try {
+              // It might have been set by Flutter app after page loaded
+              orderId = localStorage.getItem("currentOrderId") || "";
+              if (orderId) {
+                logStatus(
+                  `Got order ID from localStorage on second attempt: ${orderId}`
+                );
+              }
+            } catch (e) {
+              console.error("Error getting order ID from localStorage:", e);
+            }
+          }
+
+          // Use the correct API host from config (Laravel server) instead of window location
+          // This is where your Laravel backend is actually running
+          const apiHost = API_CONFIG.apiHost;
+          logStatus(`API host: ${apiHost}`);
+
+          // Call the webhook endpoint directly from the return page
+          const webhookUrl = `${apiHost}/api/paypal-webhook`;
+          logStatus(`Calling webhook: ${webhookUrl}`);
+
+          // Add retry mechanism - try up to 3 times with increasing delay
+          let success = false;
+          let result = null;
+          let attemptCount = 0;
+          const maxAttempts = 3;
+
+          // Prepare webhook payload - include all the data we have
+          const webhookPayload = {
+            order_id: orderId,
+            payment_id: paymentId,
+            payer_id: PayerID,
+            token: token,
+            is_direct_webhook: true,
+            timestamp: Date.now(),
+            full_url: window.location.href,
+          };
+
+          logStatus(`Webhook payload: ${JSON.stringify(webhookPayload)}`);
+
+          while (!success && attemptCount < maxAttempts) {
+            attemptCount++;
+            try {
+              logStatus(`Webhook attempt ${attemptCount}/${maxAttempts}...`);
+
+              const response = await fetch(webhookUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                  "X-API-Key": API_CONFIG.apiKey,
+                },
+                body: JSON.stringify(webhookPayload),
+              });
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP error: ${response.status} ${response.statusText}`
+                );
+              }
+
+              result = await response.json();
+              logStatus(`Webhook response: ${JSON.stringify(result)}`);
+
+              if (result.success) {
+                success = true;
+                // Mark as processed to avoid duplicate calls
+                markPaymentAsProcessed(paymentId);
+              } else {
+                // Wait before retrying
+                const delayMs = 1000 * attemptCount; // 1s, 2s, 3s...
+                logStatus(`Webhook failed, retrying in ${delayMs / 1000}s...`);
+                await new Promise((resolve) => setTimeout(resolve, delayMs));
+              }
+            } catch (e) {
+              const delayMs = 1000 * attemptCount; // 1s, 2s, 3s...
+              logStatus(
+                `Webhook error: ${e.message}, retrying in ${delayMs / 1000}s...`
+              );
+              await new Promise((resolve) => setTimeout(resolve, delayMs));
+            }
+          }
+
+          document.querySelector(".redirect-text").textContent = success
+            ? "Payment processed successfully! Returning to app..."
+            : "Payment processing issue. Returning to app...";
+
+          return result || { success: false, message: "All attempts failed" };
+        } catch (e) {
+          logStatus(`Error calling webhook: ${e.message}`);
+          document.querySelector(".redirect-text").textContent =
+            "Error processing payment. Returning to app...";
+          return { success: false, error: e.message };
+        }
+      }
+
+      // Call webhook directly - this ensures notification is sent regardless of redirect
+      // Use IIFE to execute async function immediately
+      (async () => {
+        const result = await callWebhook();
+        // Redirect back to the main app with parameters in the URL
+        setTimeout(() => {
+          try {
+            logStatus("Redirecting back to main app...");
+            // Try to redirect with parameters in the URL hash
+            // This won't trigger a page reload but will be accessible to the app
+            window.location.href = `/?paypal_return=true&t=${Date.now()}#paymentId=${paymentId}&PayerID=${PayerID}&token=${token}&order_id=${orderId}`;
+          } catch (e) {
+            logStatus(`Error redirecting: ${e.message}`);
+            // If redirect fails, still try to return to the app
+            window.location.href = "/";
+          }
+        }, 5000); // 5 seconds to give webhook time to complete and user to read status
+      })();
+    </script>
+  </body>
 </html>

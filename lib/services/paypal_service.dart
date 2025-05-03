@@ -2,11 +2,66 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:universal_html/html.dart' as html;
 import '../config/app_config.dart';
 import '../models/order.dart';
 import '../views/screens/order_success_page.dart';
 
 class PayPalService {
+  // Track processed payments to prevent duplicate handling
+  static final Set<String> _processedPayments = {};
+  static const String _processedPaymentsKey = 'processed_paypal_payments';
+
+  // Initialize processed payments from local storage
+  static Future<void> initProcessedPayments() async {
+    if (kIsWeb) {
+      try {
+        // For web platform, we can use localStorage directly through JavaScript
+        // This will be handled in paypal-return.html
+        // Here we'll just initialize the in-memory set
+        _processedPayments.clear();
+      } catch (e) {
+        print('Error initializing processed payments: $e');
+      }
+    } else {
+      // For mobile platforms, use shared_preferences
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final storedPayments = prefs.getStringList(_processedPaymentsKey) ?? [];
+        _processedPayments.clear();
+        _processedPayments.addAll(storedPayments);
+        print(
+          'Loaded ${_processedPayments.length} processed payments from storage',
+        );
+      } catch (e) {
+        print('Error loading processed payments: $e');
+      }
+    }
+  }
+
+  // Save processed payments to local storage
+  static Future<void> saveProcessedPayment(String paymentId) async {
+    if (paymentId == null || paymentId.isEmpty) return;
+
+    // Add to in-memory set
+    _processedPayments.add(paymentId);
+
+    if (!kIsWeb) {
+      // For mobile platforms, use shared_preferences
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList(
+          _processedPaymentsKey,
+          _processedPayments.toList(),
+        );
+        print('Saved processed payment $paymentId to storage');
+      } catch (e) {
+        print('Error saving processed payment: $e');
+      }
+    }
+  }
+
   // PayPal API URLs
   static String get _baseUrl =>
       AppConfig.paypalSandboxMode
@@ -65,6 +120,67 @@ class PayPalService {
         };
       }
 
+      // Add order ID to return and cancel URLs
+      final String orderId = order.id;
+      String modifiedReturnUrl = returnUrl;
+      String modifiedCancelUrl = cancelUrl;
+
+      // For web platform, add order ID to the hash part of the URL
+      if (kIsWeb) {
+        // If URLs already have a hash, append to it, otherwise add new hash
+        if (returnUrl.contains('#')) {
+          modifiedReturnUrl = '$returnUrl&order_id=$orderId';
+        } else {
+          modifiedReturnUrl = '$returnUrl#order_id=$orderId';
+        }
+
+        if (cancelUrl.contains('#')) {
+          modifiedCancelUrl = '$cancelUrl&order_id=$orderId';
+        } else {
+          modifiedCancelUrl = '$cancelUrl#order_id=$orderId';
+        }
+      } else {
+        // For mobile, add order ID as a query parameter
+        final returnUri = Uri.parse(returnUrl);
+        final cancelUri = Uri.parse(cancelUrl);
+
+        modifiedReturnUrl =
+            Uri(
+              scheme: returnUri.scheme,
+              host: returnUri.host,
+              path: returnUri.path,
+              queryParameters: {
+                ...returnUri.queryParameters,
+                'order_id': orderId,
+              },
+            ).toString();
+
+        modifiedCancelUrl =
+            Uri(
+              scheme: cancelUri.scheme,
+              host: cancelUri.host,
+              path: cancelUri.path,
+              queryParameters: {
+                ...cancelUri.queryParameters,
+                'order_id': orderId,
+              },
+            ).toString();
+      }
+
+      print('PayPal return URL: $modifiedReturnUrl');
+      print('PayPal cancel URL: $modifiedCancelUrl');
+
+      // Store order ID in localStorage for web platform
+      if (kIsWeb) {
+        try {
+          // Store the current order ID in localStorage
+          html.window.localStorage['currentOrderId'] = orderId;
+          print('Stored current order ID in localStorage: $orderId');
+        } catch (e) {
+          print('Error storing order ID in localStorage: $e');
+        }
+      }
+
       // Prepare payment request body
       final Map<String, dynamic> paymentRequest = {
         'intent': 'sale',
@@ -81,6 +197,8 @@ class PayPalService {
               },
             },
             'description': 'Payment for order #${order.id}',
+            'custom': order.id, // Store order ID in custom field
+            'invoice_number': order.id, // Store order ID in invoice number
             'item_list': {
               'items':
                   order.items
@@ -96,7 +214,10 @@ class PayPalService {
             },
           },
         ],
-        'redirect_urls': {'return_url': returnUrl, 'cancel_url': cancelUrl},
+        'redirect_urls': {
+          'return_url': modifiedReturnUrl,
+          'cancel_url': modifiedCancelUrl,
+        },
       };
 
       // Send payment request to PayPal
@@ -277,35 +398,54 @@ class PayPalService {
       // Parse the URL
       final uri = Uri.parse(url);
 
-      // Check if this is a return URL
-      if (url.contains('flutterbookstore://paypalpay')) {
-        // Extract parameters
-        final paymentId = uri.queryParameters['paymentId'];
-        final payerId = uri.queryParameters['PayerID'];
-        final token = uri.queryParameters['token'];
+      // Extract parameters
+      final paymentId = uri.queryParameters['paymentId'];
+      final payerId = uri.queryParameters['PayerID'];
+      final token = uri.queryParameters['token'];
+      final orderId =
+          uri.queryParameters['order_id']; // Extract order_id if present
 
-        print(
-          'PayPal return parameters - paymentId: $paymentId, payerId: $payerId, token: $token',
+      print(
+        'PayPal return parameters - paymentId: $paymentId, payerId: $payerId, token: $token, orderId: $orderId',
+      );
+
+      // Initialize processed payments if needed
+      await initProcessedPayments();
+
+      // Check if we've already processed this payment to avoid duplicates
+      if (paymentId != null) {
+        if (_processedPayments.contains(paymentId)) {
+          print(
+            'Payment $paymentId already processed. Skipping duplicate processing.',
+          );
+          return;
+        }
+        // Add to the set of processed payments and persist
+        await saveProcessedPayment(paymentId);
+      }
+
+      // Check if this is a return URL with proper parameters
+      if (paymentId != null && payerId != null) {
+        print('Executing PayPal payment...');
+        // Execute the payment
+        final result = await executePayment(
+          paymentId: paymentId,
+          payerId: payerId,
         );
 
-        if (paymentId != null && payerId != null) {
-          print('Executing PayPal payment...');
-          // Execute the payment
-          final result = await executePayment(
-            paymentId: paymentId,
-            payerId: payerId,
-          );
+        print(
+          'PayPal payment execution result: ${result['success']} - ${result['message']}',
+        );
 
-          print(
-            'PayPal payment execution result: ${result['success']} - ${result['message']}',
-          );
+        if (result['success']) {
+          // Get the order ID - either from URL or from payment details
+          String finalOrderId = orderId ?? '';
 
-          if (result['success']) {
+          // If we don't have an order ID yet, try to extract it from payment details
+          if (finalOrderId.isEmpty) {
             // Get the order ID from the payment details
             final paymentDetails = result['paymentDetails'];
             print('Payment details: $paymentDetails');
-
-            String orderId = '';
 
             // Try to extract order ID from description (format: "Payment for order #123")
             if (paymentDetails != null &&
@@ -319,14 +459,14 @@ class PayPalService {
               // Extract order ID from description
               final RegExp regex = RegExp(r'#(\d+)');
               final match = regex.firstMatch(description);
-              orderId = match?.group(1) ?? '';
+              finalOrderId = match?.group(1) ?? '';
 
-              print('Extracted order ID from description: $orderId');
+              print('Extracted order ID from description: $finalOrderId');
             }
 
             // If we couldn't extract the order ID from the description,
             // try to get it from custom field or invoice number
-            if (orderId.isEmpty) {
+            if (finalOrderId.isEmpty) {
               if (paymentDetails != null &&
                   paymentDetails['transactions'] != null &&
                   paymentDetails['transactions'].isNotEmpty) {
@@ -335,98 +475,134 @@ class PayPalService {
                     paymentDetails['transactions'][0]['invoice_number'];
                 if (invoiceNumber != null &&
                     invoiceNumber.toString().isNotEmpty) {
-                  orderId = invoiceNumber.toString();
-                  print('Using invoice number as order ID: $orderId');
+                  finalOrderId = invoiceNumber.toString();
+                  print('Using invoice number as order ID: $finalOrderId');
                 }
 
                 // Try custom field
-                if (orderId.isEmpty) {
+                if (finalOrderId.isEmpty) {
                   final custom = paymentDetails['transactions'][0]['custom'];
                   if (custom != null && custom.toString().isNotEmpty) {
-                    orderId = custom.toString();
-                    print('Using custom field as order ID: $orderId');
+                    finalOrderId = custom.toString();
+                    print('Using custom field as order ID: $finalOrderId');
                   }
                 }
               }
             }
+          }
 
-            if (orderId.isNotEmpty) {
-              print('Navigating to order success page with orderId: $orderId');
+          // Call webhook for web platform to ensure notification is sent
+          if (kIsWeb && finalOrderId.isNotEmpty) {
+            try {
+              print('Calling PayPal webhook for notification...');
 
-              // Navigate to the success page
-              navigatorKey.currentState?.pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => OrderSuccessPage(orderId: orderId),
-                ),
+              // Construct the webhook URL using the configured API base URL
+              final webhookUrl = Uri.parse(
+                '${AppConfig.apiBaseUrl}/paypal-webhook',
               );
-            } else {
-              print('Could not determine order ID from PayPal response');
+              print('Webhook URL: $webhookUrl');
 
-              // Even if we couldn't get the order ID, still show a success page
-              // This ensures the user sees a success message even if there's an issue
-              navigatorKey.currentState?.pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const OrderSuccessPage(orderId: null),
-                ),
-              );
+              http
+                  .post(
+                    webhookUrl,
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Accept': 'application/json',
+                      'X-API-Key': AppConfig.apiKey,
+                    },
+                    body: json.encode({
+                      'order_id': finalOrderId,
+                      'payment_id': paymentId,
+                      'payer_id': payerId,
+                      'is_direct_webhook': true,
+                      'timestamp': DateTime.now().millisecondsSinceEpoch,
+                    }),
+                  )
+                  .then((response) {
+                    print(
+                      'Webhook response: ${response.statusCode} - ${response.body}',
+                    );
+                  })
+                  .catchError((error) {
+                    print('Webhook error: $error');
+                  });
+            } catch (e) {
+              print('Error calling webhook: $e');
             }
-          } else {
-            // Handle payment failure
-            print('Payment execution failed: ${result['message']}');
+          }
 
-            // Show an error dialog
-            navigatorKey.currentState?.push(
+          if (finalOrderId.isNotEmpty) {
+            print(
+              'Navigating to order success page with orderId: $finalOrderId',
+            );
+
+            // Navigate to the success page
+            navigatorKey.currentState?.pushReplacement(
               MaterialPageRoute(
-                builder:
-                    (context) => Scaffold(
-                      appBar: AppBar(title: const Text('Payment Error')),
-                      body: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
-                                size: 64,
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Payment Failed',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                result['message'] ??
-                                    'An error occurred during payment processing',
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 24),
-                              ElevatedButton(
-                                onPressed:
-                                    () => navigatorKey.currentState?.pop(),
-                                child: const Text('Go Back'),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                builder: (context) => OrderSuccessPage(orderId: finalOrderId),
+              ),
+            );
+          } else {
+            print('Could not determine order ID from PayPal response');
+
+            // Even if we couldn't get the order ID, still show a success page
+            // This ensures the user sees a success message even if there's an issue
+            navigatorKey.currentState?.pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const OrderSuccessPage(orderId: null),
               ),
             );
           }
         } else {
-          print('Missing required PayPal parameters');
+          // Handle payment failure
+          print('Payment execution failed: ${result['message']}');
+
+          // Show an error dialog
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder:
+                  (context) => Scaffold(
+                    appBar: AppBar(title: const Text('Payment Error')),
+                    body: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Colors.red,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Payment Failed',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              result['message'] ??
+                                  'An error occurred during payment processing',
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => navigatorKey.currentState?.pop(),
+                              child: const Text('Go Back'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+            ),
+          );
         }
-      } else if (url.contains('flutterbookstore://cancel')) {
-        // Handle cancellation
-        print('PayPal payment was cancelled by the user');
-        // Navigate back to the previous page
-        navigatorKey.currentState?.pop();
+      } else {
+        print('Missing required PayPal parameters');
       }
     } catch (e) {
       print('Error handling PayPal return URL: $e');
